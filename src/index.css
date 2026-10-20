@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --ui-bg: #f7f4ef;
+  --ui-surface: #ffffff;
+  --ui-elevated: #fdfbf7;
+  --ui-border: #dedbd4;
+  --ui-border-strong: #c9c4bb;
+  --ui-active: #ece7df;
+  --ui-primary: #2f6f4e;
+  --ui-primary-strong: #25583f;
+  --ui-muted: #78716c;
+  --ui-subtle: #8f8982;
+  --ui-text-soft: #57534e;
+  --ui-text: #292524;
+  --ui-text-strong: #1c1917;
+}
+
+.dark {
+  --ui-bg: #171717;
+  --ui-surface: #262626;
+  --ui-elevated: #2f2f2f;
+  --ui-border: #3f3f3f;
+  --ui-border-strong: #57534e;
+  --ui-active: #3a3733;
+  --ui-primary: #3f8f67;
+  --ui-primary-strong: #2f6f4e;
+  --ui-muted: #a8a29e;
+  --ui-subtle: #a8a29e;
+  --ui-text-soft: #d6d3d1;
+  --ui-text: #f5f5f4;
+  --ui-text-strong: #fafaf9;
+}
+
+@theme {
+  /* Scandinavian-inspired neutrals; green is reserved for primary actions. */
+  --color-fairway-50: #fafaf9;
+  --color-fairway-100: var(--ui-active);
+  --color-fairway-200: var(--ui-text);
+  --color-fairway-300: var(--ui-text-soft);
+  --color-fairway-400: var(--ui-subtle);
+  --color-fairway-500: var(--ui-muted);
+  --color-fairway-600: var(--ui-primary);
+  --color-fairway-700: var(--ui-primary-strong);
+  --color-fairway-800: var(--ui-border);
+  --color-fairway-900: var(--ui-surface);
+  --color-fairway-950: var(--ui-bg);
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #0f1419;
+  color: var(--ui-text);
+  @apply antialiased;
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.device-showcase {
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgb(47 111 78 / 0.22), transparent),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgb(30 58 95 / 0.35), transparent),
+    #0f1419;
+}
+
+.iphone-frame {
+  position: relative;
+  width: min(390px, calc(100vw - 2rem));
+  height: min(844px, calc(100dvh - 3rem));
+  padding: 14px;
+  border-radius: 3.25rem;
+  background: linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 45%, #0d0d0f 100%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 24px 48px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+.iphone-screen {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 2.65rem;
+  background: var(--ui-bg);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.35);
+}
+
+.iphone-island {
+  pointer-events: none;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 30;
+  height: 28px;
+  width: 108px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #000;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.iphone-home-indicator {
+  pointer-events: none;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  z-index: 30;
+  height: 4px;
+  width: 128px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.35);
+}
+
+.iphone-side-button {
+  position: absolute;
+  border-radius: 2px;
+  background: #2c2c2e;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+.iphone-side-button--silent {
+  top: 108px;
+  left: -3px;
+  height: 28px;
+  width: 3px;
+}
+
+.iphone-side-button--volume-up {
+  top: 156px;
+  left: -3px;
+  height: 44px;
+  width: 3px;
+}
+
+.iphone-side-button--volume-down {
+  top: 210px;
+  left: -3px;
+  height: 44px;
+  width: 3px;
+}
+
+.iphone-side-button--power {
+  top: 168px;
+  right: -3px;
+  height: 72px;
+  width: 3px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
