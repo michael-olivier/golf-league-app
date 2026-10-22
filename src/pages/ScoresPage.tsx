@@ -85,6 +85,9 @@ export function ScoresPage({ variant }: ScoresPageProps) {
   const [activePlayerId, setActivePlayerId] = useState(currentPlayer.id);
   const [currentHole, setCurrentHole] = useState(0);
   const [scorecardOpen, setScorecardOpen] = useState(false);
+  const [missingScoreWarning, setMissingScoreWarning] = useState<
+    string | null
+  >(null);
 
   const foursomePlayers = useMemo(() => {
     if (!foursome) return [currentPlayer];
@@ -143,36 +146,19 @@ export function ScoresPage({ variant }: ScoresPageProps) {
     }
   }, [sessionId, activePlayerId, getRound]);
 
-  const forgotScoreOnPreviousHole = useMemo(() => {
-    if (
-      isCasual ||
-      scope !== "foursome" ||
-      !sessionId ||
-      currentHole <= 0 ||
-      foursomePlayers.length < 2 ||
-      !canEditActivePlayer
-    ) {
-      return null;
-    }
-    const prevIndex = currentHole - 1;
-    const missing = foursomePlayers.filter((p) => {
-      const score = getRound(sessionId, p.id)?.scores[prevIndex];
-      return !isHolePlayed(score);
-    });
-    if (missing.length === 0) return null;
-    if (missing.length === 1) {
-      return `You forgot to add a score for ${missing[0].name}`;
-    }
-    const names = missing.map((p) => p.name);
-    return `You forgot to add scores for ${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+  useEffect(() => {
+    if (!missingScoreWarning || !sessionId) return;
+    const complete = foursomePlayers.every((p) =>
+      isHolePlayed(getRound(sessionId, p.id)?.scores[currentHole]),
+    );
+    if (complete) setMissingScoreWarning(null);
   }, [
-    isCasual,
-    scope,
+    missingScoreWarning,
     sessionId,
     currentHole,
     foursomePlayers,
-    canEditActivePlayer,
     getRound,
+    state.rounds,
   ]);
 
   if (isCasual && !setup) {
@@ -218,6 +204,37 @@ export function ScoresPage({ variant }: ScoresPageProps) {
   const claimScorer = () => {
     if (!foursome || !match) return;
     setDesignatedScorer(match.id, foursome.id, state.currentUserId);
+  };
+
+  const goToPreviousHole = () => {
+    setMissingScoreWarning(null);
+    setCurrentHole((h) => Math.max(0, h - 1));
+  };
+
+  const goToNextHole = () => {
+    if (currentHole >= playingHoles.length - 1) return;
+
+    if (
+      !isCasual &&
+      scope === "foursome" &&
+      canEditActivePlayer &&
+      foursomePlayers.length > 1
+    ) {
+      const missing = foursomePlayers.filter((p) => {
+        const score = getRound(sessionId, p.id)?.scores[currentHole];
+        return !isHolePlayed(score);
+      });
+      if (missing.length > 0) {
+        setActivePlayerId(missing[0].id);
+        setMissingScoreWarning(
+          `You forgot to add a score for ${missing[0].name}`,
+        );
+        return;
+      }
+    }
+
+    setMissingScoreWarning(null);
+    setCurrentHole((h) => Math.min(playingHoles.length - 1, h + 1));
   };
 
   const selectedTee =
@@ -337,12 +354,8 @@ export function ScoresPage({ variant }: ScoresPageProps) {
                 score={{ strokes: holeScore?.strokes ?? null }}
                 onChange={updateScore}
                 navigation={{
-                  onPrevious: () =>
-                    setCurrentHole((h) => Math.max(0, h - 1)),
-                  onNext: () =>
-                    setCurrentHole((h) =>
-                      Math.min(playingHoles.length - 1, h + 1),
-                    ),
+                  onPrevious: goToPreviousHole,
+                  onNext: goToNextHole,
                   canPrevious: currentHole > 0,
                   canNext: currentHole < playingHoles.length - 1,
                 }}
@@ -361,12 +374,8 @@ export function ScoresPage({ variant }: ScoresPageProps) {
                 }
                 onChange={updateScore}
                 navigation={{
-                  onPrevious: () =>
-                    setCurrentHole((h) => Math.max(0, h - 1)),
-                  onNext: () =>
-                    setCurrentHole((h) =>
-                      Math.min(playingHoles.length - 1, h + 1),
-                    ),
+                  onPrevious: goToPreviousHole,
+                  onNext: goToNextHole,
                   canPrevious: currentHole > 0,
                   canNext: currentHole < playingHoles.length - 1,
                 }}
@@ -374,9 +383,9 @@ export function ScoresPage({ variant }: ScoresPageProps) {
             )}
           </fieldset>
 
-          {forgotScoreOnPreviousHole ? (
+          {missingScoreWarning ? (
             <p className="text-xs leading-snug text-sand-brick">
-              {forgotScoreOnPreviousHole}
+              {missingScoreWarning}
             </p>
           ) : null}
 
