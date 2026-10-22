@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   NavHomeIcon,
   NavLeagueIcon,
@@ -15,7 +15,31 @@ const navItems = [
   { to: "/settings", label: "Settings", Icon: NavSettingsIcon },
 ] as const;
 
+function isNavItemActive(pathname: string, to: string): boolean {
+  if (to === "/") {
+    return pathname === "/";
+  }
+  if (to === "/scores") {
+    if (pathname === "/scores/league") return false;
+    return (
+      pathname === "/scores" ||
+      pathname.startsWith("/scores/setup") ||
+      pathname.startsWith("/scores/entry")
+    );
+  }
+  if (to === "/league") {
+    return (
+      pathname === "/league" ||
+      pathname.startsWith("/league/") ||
+      pathname === "/scores/league"
+    );
+  }
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
 export function Layout() {
+  const { pathname } = useLocation();
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent px-4 pb-0">
@@ -31,13 +55,14 @@ export function Layout() {
               key={item.to}
               to={item.to}
               end={item.to === "/"}
-              className={({ isActive }) =>
-                `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-medium transition ${
-                  isActive
+              className={() => {
+                const active = isNavItemActive(pathname, item.to);
+                return `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-medium transition ${
+                  active
                     ? "bg-fairway-100 text-fairway-200"
                     : "text-fairway-400 hover:text-fairway-200"
-                }`
-              }
+                }`;
+              }}
             >
               <item.Icon />
               {item.label}
