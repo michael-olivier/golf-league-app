@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -b && vite build",
+    "build:pages": "tsc -b && VITE_BASE_PATH=/golf-league-app/ vite build && cp dist/index.html dist/404.html",
+    "deploy:pages": "npm run build:pages && gh workflow run \"Deploy GitHub Pages\" --ref main",
     "preview": "vite preview",
     "lint": "eslint ."
   },

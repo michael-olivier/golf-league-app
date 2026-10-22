@@ -39,11 +39,20 @@ function isNavItemActive(pathname: string, to: string): boolean {
 
 export function Layout() {
   const { pathname } = useLocation();
+  const isHome = pathname === "/";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent px-4 pb-0">
-        <div className="page-scroll flex min-w-0 flex-col">
+      <main
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden pb-0 ${
+          isHome ? "bg-sand-hunter px-0" : "bg-transparent px-4"
+        }`}
+      >
+        <div
+          className={`page-scroll flex min-w-0 flex-col ${
+            isHome ? "min-h-full bg-sand-hunter px-4" : ""
+          }`}
+        >
           <Outlet />
         </div>
       </main>
