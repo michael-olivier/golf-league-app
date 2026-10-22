@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import type { Player } from "../../types";
-import { playerInitials } from "../../utils/player";
+import { PlayerAvatar } from "../PlayerAvatar";
+import { playerTabLabels } from "../../utils/player";
 
 interface FoursomePlayerTabsProps {
   players: Player[];
@@ -12,16 +14,17 @@ export function FoursomePlayerTabs({
   activePlayerId,
   onSelect,
 }: FoursomePlayerTabsProps) {
+  const labels = useMemo(() => playerTabLabels(players), [players]);
+
   return (
     <div
-      className="grid gap-1 rounded-xl bg-fairway-900/60 p-1"
-      style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}
+      className="grid w-full min-w-0 grid-cols-4 gap-1"
       role="tablist"
       aria-label="Foursome players"
     >
       {players.map((player) => {
         const active = player.id === activePlayerId;
-        const initials = playerInitials(player.name);
+        const label = labels.get(player.id) ?? player.name;
         return (
           <button
             key={player.id}
@@ -29,15 +32,21 @@ export function FoursomePlayerTabs({
             role="tab"
             aria-selected={active}
             aria-label={player.name}
-            title={player.name}
             onClick={() => onSelect(player.id)}
-            className={`rounded-lg py-2.5 text-sm font-semibold tracking-wide transition ${
+            className={`flex min-w-0 w-full flex-col items-center gap-1 rounded-[8px] px-0.5 py-1.5 transition ${
               active
-                ? "bg-fairway-700 text-white"
-                : "text-fairway-400 hover:text-fairway-200"
+                ? "border border-sand-hunter bg-sand-hunter/10"
+                : "border border-transparent opacity-85 hover:opacity-100"
             }`}
           >
-            {initials}
+            <PlayerAvatar player={player} size="xs" />
+            <span
+              className={`w-full truncate text-center text-[11px] font-medium leading-tight ${
+                active ? "text-sand-hunter" : "text-fairway-500"
+              }`}
+            >
+              {label}
+            </span>
           </button>
         );
       })}

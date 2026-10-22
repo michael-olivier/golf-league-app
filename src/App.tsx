@@ -11,9 +11,11 @@ import { Layout } from "./components/Layout";
 import { AdminPage } from "./pages/AdminPage";
 import { HandicapsPage } from "./pages/HandicapsPage";
 import { HomePage } from "./pages/HomePage";
+import { LeaguePage } from "./pages/LeaguePage";
 import { RulesPage } from "./pages/RulesPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { MakeupPage } from "./pages/MakeupPage";
+import { LeagueContactPage } from "./pages/LeagueContactPage";
 import { RosterPage } from "./pages/RosterPage";
 import { ScoreCourseSelectPage } from "./pages/ScoreCourseSelectPage";
 import { ScoreSetupPage } from "./pages/ScoreSetupPage";
@@ -22,8 +24,6 @@ import { SplashPage } from "./pages/SplashPage";
 import { LeagueProvider, useLeague } from "./store/LeagueContext";
 import { RoundSetupProvider } from "./store/RoundSetupContext";
 import { LocationPreferencesProvider } from "./store/LocationPreferencesContext";
-import { ThemeProvider } from "./store/ThemeContext";
-
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { state } = useLeague();
   if (state.role !== "admin") {
@@ -60,6 +60,7 @@ function AppRoutes() {
                 <Route path="app/*" element={<LegacyAppPathRedirect />} />
                 <Route element={<Layout />}>
                   <Route index element={<HomePage />} />
+                  <Route path="league" element={<LeaguePage />} />
                   <Route path="scores" element={<ScoreCourseSelectPage />} />
                   <Route path="scores/setup" element={<ScoreSetupPage />} />
                   <Route path="scores/league" element={<ScoresPage variant="league" />} />
@@ -67,6 +68,7 @@ function AppRoutes() {
                   <Route path="handicaps" element={<HandicapsPage />} />
                   <Route path="makeup" element={<MakeupPage />} />
                   <Route path="roster" element={<RosterPage />} />
+                  <Route path="contact/:contactId" element={<LeagueContactPage />} />
                   <Route path="rules" element={<RulesPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route
@@ -89,14 +91,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <LocationPreferencesProvider>
-        <LeagueProvider>
-          <RoundSetupProvider>
-            <AppRoutes />
-          </RoundSetupProvider>
-        </LeagueProvider>
-      </LocationPreferencesProvider>
-    </ThemeProvider>
+    <LocationPreferencesProvider>
+      <LeagueProvider>
+        <RoundSetupProvider>
+          <AppRoutes />
+        </RoundSetupProvider>
+      </LeagueProvider>
+    </LocationPreferencesProvider>
   );
 }

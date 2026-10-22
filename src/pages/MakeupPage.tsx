@@ -1,10 +1,75 @@
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PageTitleSection } from "../components/PageTitleSection";
+import { PlayerAvatar } from "../components/PlayerAvatar";
 import { useLeague } from "../store/LeagueContext";
+import type { MakeupProposal, Player, WeeklyMatch } from "../types";
 import {
+  allMatchPlayersConfirmedProposal,
   formatMakeupDateTime,
-  opponentTeamId,
-  playersOnTeam,
+  isOnMatchTeam,
+  playersInMatch,
 } from "../utils/makeup";
+
+function ConfirmedPill() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-sand-sage/25 px-3 py-1.5 text-xs font-semibold text-sand-hunter">
+      <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={0.5} aria-hidden />
+      Confirmed
+    </span>
+  );
+}
+
+function ProposalConfirmationsList({
+  proposal,
+  match,
+  players,
+  getPlayer,
+}: {
+  proposal: MakeupProposal;
+  match: WeeklyMatch;
+  players: Player[];
+  getPlayer: (id: string) => Player | undefined;
+}) {
+  const roster = playersInMatch(players, match);
+  const confirmed = proposal.confirmedByPlayerIds
+    .map((id) => getPlayer(id))
+    .filter((p): p is NonNullable<typeof p> => !!p);
+
+  if (confirmed.length === 0) {
+    return (
+      <p className="mt-3 text-xs text-fairway-600">No confirmations yet.</p>
+    );
+  }
+
+  const allConfirmed =
+    roster.length > 0 && confirmed.length === roster.length;
+
+  return (
+    <div className="mt-3">
+      <p className="card-title">
+        {allConfirmed
+          ? "Confirmed"
+          : `${confirmed.length} of ${roster.length} players`}
+      </p>
+      <ul className="mt-2 space-y-2">
+        {confirmed.map((player) => (
+          <li key={player.id} className="flex items-center gap-2">
+            <PlayerAvatar player={player} size="xs" />
+            <span className="min-w-0 flex-1 text-sm text-fairway-200">
+              {player.name}
+            </span>
+            <Check
+              className="h-4 w-4 shrink-0 text-sand-hunter"
+              strokeWidth={0.5}
+              aria-hidden
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function MakeupPage() {
   const {
@@ -30,8 +95,6 @@ export function MakeupPage() {
   const [teeTime, setTeeTime] = useState("16:00");
   const [notes, setNotes] = useState("");
 
-  const myTeam = getTeam(currentPlayer.teamId);
-
   const resetForm = () => {
     setDate("");
     setTeeTime("16:00");
@@ -56,12 +119,15 @@ export function MakeupPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-fairway-400">
-        Coordinate a new date when a weekly match is postponed. Either team can
-        propose times; a player from the <strong className="text-fairway-300">other</strong>{" "}
-        team confirms to lock it in.
-      </p>
+    <div className="space-y-5 pb-4">
+      <PageTitleSection title="Makeup dates">
+        <p className="text-sm text-fairway-400">
+          Coordinate a new date when a weekly match is postponed. Anyone in the
+          match can propose a time;{" "}
+          <strong className="text-fairway-300">all four players</strong> must
+          confirm the same proposal before it is locked in.
+        </p>
+      </PageTitleSection>
 
       {allThreads.length === 0 ? (
         <div className="rounded-xl border border-fairway-800 bg-fairway-900/30 px-4 py-8 text-center text-sm text-fairway-500">
@@ -73,8 +139,6 @@ export function MakeupPage() {
             const course = getCourse(match.courseId);
             const home = getTeam(match.teamPairing.homeTeamId);
             const away = getTeam(match.teamPairing.awayTeamId);
-            const opponentId = opponentTeamId(match, currentPlayer.teamId);
-            const opponent = opponentId ? getTeam(opponentId) : undefined;
             const isExpanded = makeup
               ? expandedId === makeup.id
               : expandedId === `new-${match.id}`;
@@ -83,9 +147,9 @@ export function MakeupPage() {
               return (
                 <li
                   key={match.id}
-                  className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-950/20"
+                  className="rounded-xl border border-sand-brick/35 bg-sand-brick/10 p-4"
                 >
-                  <p className="text-xs font-medium uppercase tracking-wide text-amber-400/90">
+                  <p className="text-xs font-medium uppercase tracking-wide text-sand-brick">
                     Postponed · Week {match.weekNumber}
                   </p>
                   <h2 className="mt-1 font-semibold text-fairway-200">
@@ -159,9 +223,12 @@ export function MakeupPage() {
                   <div className="space-y-4 border-t border-fairway-800 px-4 py-4">
                     {confirmed && confirmedProposal ? (
                       <div className="rounded-lg bg-fairway-800/40 px-3 py-3 text-sm">
-                        <p className="font-medium text-fairway-200">
-                          Makeup locked in
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-fairway-200">
+                            Makeup locked in
+                          </p>
+                          <ConfirmedPill />
+                        </div>
                         <p className="mt-1 text-fairway-300">
                           {formatMakeupDateTime(
                             confirmedProposal.date,
@@ -177,11 +244,17 @@ export function MakeupPage() {
                           Proposed by{" "}
                           {getPlayer(confirmedProposal.proposedByPlayerId)?.name}
                         </p>
+                        <ProposalConfirmationsList
+                          proposal={confirmedProposal}
+                          match={match}
+                          players={state.players}
+                          getPlayer={getPlayer}
+                        />
                       </div>
                     ) : (
                       <>
                         <div>
-                          <h3 className="text-xs font-semibold uppercase tracking-wide text-fairway-500">
+                          <h3 className="card-title">
                             Proposed dates
                           </h3>
                           {makeup.proposals.length === 0 ? (
@@ -199,14 +272,34 @@ export function MakeupPage() {
                                   const proposerTeam = getTeam(
                                     proposal.proposedByTeamId,
                                   );
+                                  const isProposalLocked =
+                                    makeup.status === "confirmed" &&
+                                    makeup.confirmedProposalId === proposal.id;
+                                  const allPlayersConfirmed =
+                                    allMatchPlayersConfirmedProposal(
+                                      proposal,
+                                      match,
+                                      state.players,
+                                    );
+                                  const userConfirmed =
+                                    proposal.confirmedByPlayerIds.includes(
+                                      currentPlayer.id,
+                                    );
                                   const canConfirm =
-                                    proposal.proposedByTeamId !==
-                                    currentPlayer.teamId;
-
+                                    makeup.status === "open" &&
+                                    isOnMatchTeam(match, currentPlayer.teamId) &&
+                                    !userConfirmed &&
+                                    !allPlayersConfirmed;
+                                  const showLockedHighlight =
+                                    isProposalLocked || allPlayersConfirmed;
                                   return (
                                     <li
                                       key={proposal.id}
-                                      className="rounded-lg border border-fairway-800 bg-fairway-950/60 p-3"
+                                      className={`rounded-lg border p-3 ${
+                                        showLockedHighlight
+                                          ? "border-sand-hunter bg-sand-sage/15 ring-1 ring-sand-sage/35"
+                                          : "border-fairway-800 bg-fairway-950/60"
+                                      }`}
                                     >
                                       <div className="flex items-start justify-between gap-2">
                                         <div>
@@ -233,8 +326,17 @@ export function MakeupPage() {
                                             </p>
                                           )}
                                         </div>
+                                        {showLockedHighlight ? (
+                                          <ConfirmedPill />
+                                        ) : null}
                                       </div>
-                                      {canConfirm && (
+                                      <ProposalConfirmationsList
+                                        proposal={proposal}
+                                        match={match}
+                                        players={state.players}
+                                        getPlayer={getPlayer}
+                                      />
+                                      {canConfirm ? (
                                         <button
                                           type="button"
                                           onClick={() =>
@@ -245,9 +347,9 @@ export function MakeupPage() {
                                           }
                                           className="mt-3 w-full rounded-lg bg-fairway-600 py-2 text-sm font-semibold text-white"
                                         >
-                                          Confirm for {opponent?.name ?? "opponent"}
+                                          Confirm
                                         </button>
-                                      )}
+                                      ) : null}
                                     </li>
                                   );
                                 })}
@@ -255,71 +357,59 @@ export function MakeupPage() {
                           )}
                         </div>
 
-                        <div className="rounded-xl border border-fairway-800 bg-fairway-950/40 p-3 space-y-3">
-                          <h3 className="text-xs font-semibold uppercase tracking-wide text-fairway-500">
-                            Propose a date ({myTeam?.name})
-                          </h3>
-                          <label className="block text-xs text-fairway-400">
-                            Date
-                            <input
-                              type="date"
-                              value={date}
-                              min={new Date().toISOString().slice(0, 10)}
-                              onChange={(e) => setDate(e.target.value)}
-                              className="mt-1 w-full rounded-lg border border-fairway-800 bg-fairway-950 px-3 py-2 text-fairway-200"
-                            />
-                          </label>
-                          <label className="block text-xs text-fairway-400">
-                            Tee time
-                            <input
-                              type="time"
-                              value={teeTime}
-                              onChange={(e) => setTeeTime(e.target.value)}
-                              className="mt-1 w-full rounded-lg border border-fairway-800 bg-fairway-950 px-3 py-2 text-fairway-200"
-                            />
-                          </label>
-                          <label className="block text-xs text-fairway-400">
-                            Note (optional)
-                            <textarea
-                              value={notes}
-                              onChange={(e) => setNotes(e.target.value)}
-                              rows={2}
-                              placeholder="e.g. Back nine only, twilight rates…"
-                              className="mt-1 w-full resize-none rounded-lg border border-fairway-800 bg-fairway-950 px-3 py-2 text-fairway-200 placeholder:text-fairway-500"
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            disabled={!date}
-                            onClick={() => handlePropose(makeup.id)}
-                            className="w-full rounded-lg bg-fairway-700 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
-                          >
-                            Add proposal
-                          </button>
-                        </div>
-
-                        <div className="text-xs text-fairway-600">
-                          <p className="font-medium text-fairway-500">
-                            Your teammates
-                          </p>
-                          <p className="mt-1">
-                            {playersOnTeam(state.players, currentPlayer.teamId)
-                              .map((p) => p.name)
-                              .join(", ")}
-                          </p>
-                          {opponent && (
-                            <>
-                              <p className="mt-2 font-medium text-fairway-500">
-                                {opponent.name}
-                              </p>
-                              <p className="mt-1">
-                                {playersOnTeam(state.players, opponent.id)
-                                  .map((p) => p.name)
-                                  .join(", ")}
-                              </p>
-                            </>
-                          )}
-                        </div>
+                        {makeup.status === "open" ? (
+                          <div>
+                            <h3 className="card-title">Propose a date</h3>
+                            <fieldset
+                              disabled={makeup.proposals.some((p) =>
+                                allMatchPlayersConfirmedProposal(
+                                  p,
+                                  match,
+                                  state.players,
+                                ),
+                              )}
+                              className="mt-2 space-y-3 disabled:opacity-50"
+                            >
+                              <label className="block text-xs text-fairway-400">
+                                Date
+                                <input
+                                  type="date"
+                                  value={date}
+                                  min={new Date().toISOString().slice(0, 10)}
+                                  onChange={(e) => setDate(e.target.value)}
+                                  className="mt-1 w-full rounded-lg border border-fairway-800 bg-fairway-950 px-3 py-2 text-fairway-200 disabled:cursor-not-allowed"
+                                />
+                              </label>
+                              <label className="block text-xs text-fairway-400">
+                                Tee time
+                                <input
+                                  type="time"
+                                  value={teeTime}
+                                  onChange={(e) => setTeeTime(e.target.value)}
+                                  className="mt-1 w-full rounded-lg border border-fairway-800 bg-fairway-950 px-3 py-2 text-fairway-200 disabled:cursor-not-allowed"
+                                />
+                              </label>
+                              <label className="block text-xs text-fairway-400">
+                                Note (optional)
+                                <textarea
+                                  value={notes}
+                                  onChange={(e) => setNotes(e.target.value)}
+                                  rows={2}
+                                  placeholder="e.g. Back nine only, twilight rates…"
+                                  className="mt-1 w-full resize-none rounded-lg border border-fairway-800 bg-fairway-950 px-3 py-2 text-fairway-200 placeholder:text-fairway-500 disabled:cursor-not-allowed"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                disabled={!date}
+                                onClick={() => handlePropose(makeup.id)}
+                                className="w-full rounded-lg bg-fairway-700 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                              >
+                                Add proposal
+                              </button>
+                            </fieldset>
+                          </div>
+                        ) : null}
                       </>
                     )}
                   </div>

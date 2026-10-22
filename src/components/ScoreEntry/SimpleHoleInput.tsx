@@ -1,11 +1,15 @@
 import type { SimpleHoleScore } from "../../types";
-import { HoleScoreStepper } from "./HoleScoreStepper";
+import {
+  HoleScoreStepper,
+  type HoleNavigation,
+} from "./HoleScoreStepper";
 
 interface SimpleHoleInputProps {
   holeNumber: number;
   par: number;
   score: SimpleHoleScore;
   onChange: (score: SimpleHoleScore) => void;
+  navigation: HoleNavigation;
 }
 
 export function SimpleHoleInput({
@@ -13,6 +17,7 @@ export function SimpleHoleInput({
   par,
   score,
   onChange,
+  navigation,
 }: SimpleHoleInputProps) {
   return (
     <HoleScoreStepper
@@ -20,6 +25,7 @@ export function SimpleHoleInput({
       par={par}
       strokes={score.strokes}
       onChange={(strokes) => onChange({ strokes })}
+      navigation={navigation}
     />
   );
 }

@@ -1,15 +1,21 @@
 import type { DetailedHoleScore } from "../../types";
+import { greenInRegulationHit } from "../../utils/scorecard";
 import { DirectionalPicker } from "./DirectionalPicker";
-import { HoleScoreStepper } from "./HoleScoreStepper";
+import {
+  HoleScoreStepper,
+  type HoleNavigation,
+} from "./HoleScoreStepper";
 
 interface DetailedHoleInputProps {
   holeNumber: number;
   par: number;
   score: DetailedHoleScore;
   onChange: (score: DetailedHoleScore) => void;
+  navigation: HoleNavigation;
 }
 
-const statTitleClass = "mb-2 text-center text-xs font-semibold text-fairway-200";
+const statTitleClass =
+  "mb-2 text-center text-sm font-bold uppercase tracking-wider text-[#373737]";
 
 function StatStepper({
   label,
@@ -25,22 +31,22 @@ function StatStepper({
   return (
     <div>
       <p className={statTitleClass}>{label}</p>
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-center gap-2">
         <button
           type="button"
           onClick={onDecrement}
-          className="h-9 w-9 shrink-0 rounded-lg bg-fairway-800 font-bold"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-sand-sage/50 bg-sand-sage/15 text-xl font-bold text-sand-hunter"
           aria-label={`Fewer ${label.toLowerCase()}`}
         >
           −
         </button>
-        <span className="min-w-[2rem] text-center text-lg font-semibold tabular-nums">
+        <span className="min-w-[2rem] text-center text-xl font-semibold tabular-nums text-[#373737]">
           {value}
         </span>
         <button
           type="button"
           onClick={onIncrement}
-          className="h-9 w-9 shrink-0 rounded-lg bg-fairway-600 font-bold text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sand-hunter text-xl font-bold text-white"
           aria-label={`More ${label.toLowerCase()}`}
         >
           +
@@ -55,40 +61,41 @@ export function DetailedHoleInput({
   par,
   score,
   onChange,
+  navigation,
 }: DetailedHoleInputProps) {
-  const patch = (p: Partial<DetailedHoleScore>) => onChange({ ...score, ...p });
+  const patch = (p: Partial<DetailedHoleScore>) => {
+    const next = { ...score, ...p };
+    const girHit = greenInRegulationHit(par, next.strokes, next.putts);
+    onChange({
+      ...next,
+      greenInRegulation:
+        girHit === null ? null : girHit ? "center" : null,
+    });
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <HoleScoreStepper
         holeNumber={holeNumber}
         par={par}
         strokes={score.strokes}
         onChange={(strokes) => patch({ strokes })}
+        navigation={navigation}
       />
 
-      <div className="space-y-5 border-t border-fairway-800/80 pt-4">
-        <div className="grid grid-cols-2 items-start gap-2">
-          {par >= 4 ? (
+      <div className="space-y-5">
+        {par >= 4 ? (
+          <div className="flex justify-center">
             <DirectionalPicker
               label="Fairway"
               compact
               value={score.fairwayHit}
               onChange={(fairwayHit) => patch({ fairwayHit })}
             />
-          ) : (
-            <div aria-hidden />
-          )}
-          <DirectionalPicker
-            label="GIR"
-            compact
-            className={par >= 4 ? undefined : "col-start-2"}
-            value={score.greenInRegulation}
-            onChange={(greenInRegulation) => patch({ greenInRegulation })}
-          />
-        </div>
+          </div>
+        ) : null}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
           <StatStepper
             label="Putts"
             value={score.putts ?? "—"}
@@ -113,14 +120,16 @@ export function DetailedHoleInput({
           />
         </div>
 
-        <label className="flex cursor-pointer items-center justify-center gap-2 py-1">
+        <label className="flex cursor-pointer items-center justify-center gap-2.5 py-1">
           <input
             type="checkbox"
             checked={score.sandSave === true}
             onChange={(e) => patch({ sandSave: e.target.checked })}
-            className="h-4 w-4 rounded border-fairway-600 bg-fairway-950 text-fairway-600 focus:ring-fairway-500"
+            className="h-[18px] w-[18px] rounded border-2 border-sand-hunter accent-sand-hunter"
           />
-          <span className="text-xs font-semibold text-fairway-200">Sand save</span>
+          <span className="text-xs font-bold uppercase tracking-wide text-[#373737]">
+            Sand save
+          </span>
         </label>
       </div>
     </div>

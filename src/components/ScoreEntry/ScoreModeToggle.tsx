@@ -1,3 +1,5 @@
+import { Switch } from "../Switch";
+
 interface ScoreModeToggleProps {
   statsEnabled: boolean;
   onChange: (statsEnabled: boolean) => void;
@@ -11,26 +13,15 @@ export function ScoreModeToggle({
 }: ScoreModeToggleProps) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-xs font-medium text-fairway-400">
+      <span className="text-sm font-medium text-[#373737]">
         Include detailed stats
       </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={statsEnabled}
-        aria-label="Include detailed stats"
+      <Switch
+        checked={statsEnabled}
+        onChange={onChange}
         disabled={disabled}
-        onClick={() => onChange(!statsEnabled)}
-        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 disabled:opacity-40 ${
-          statsEnabled ? "bg-fairway-500" : "bg-fairway-700"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
-            statsEnabled ? "translate-x-4" : "translate-x-0"
-          }`}
-        />
-      </button>
+        aria-label="Include detailed stats"
+      />
     </div>
   );
 }

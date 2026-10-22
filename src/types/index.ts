@@ -1,12 +1,31 @@
 export type UserRole = "player" | "admin";
 export type LeagueLevel = "A" | "B";
 
+export interface PlayerRecentRound {
+  courseId: string;
+  playedOn: string;
+  holeCount: number;
+  strokes: number;
+}
+
+export interface PlayerSeasonStats {
+  roundsPlayed: number;
+  averageScore: number;
+  matchWins: number;
+  matchLosses: number;
+}
+
 export interface Player {
   id: string;
   name: string;
   ghinNumber: string;
   handicapIndex: number;
   teamId: string;
+  avatarUrl?: string;
+  recentRound?: PlayerRecentRound;
+  /** Score-to-par by round (oldest → newest) for the home sparkline. */
+  recentScoreToParTrend?: number[];
+  seasonStats?: PlayerSeasonStats;
 }
 
 export interface Team {
@@ -19,24 +38,65 @@ export interface Team {
 export interface Hole {
   number: number;
   par: number;
+  /** When set and different from `par`, shown as women’s par on the scorecard. */
+  parWomen?: number;
   handicapIndex: number;
+}
+
+export interface LeagueContact {
+  id: string;
+  name: string;
+  role: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface League {
   id: string;
   name: string;
-  /** Shown on splash when set; otherwise the home course logo is used. */
+  director?: LeagueContact;
+  /** Full splash mark; otherwise the home course logo is used. */
   logoUrl?: string;
+  /** Header mark on home (e.g. horizontal wordmark). */
+  homeLogoUrl?: string;
   homeCourseId: string;
   /** When true, the home card shows the weekly game type instead of the course name. */
   sameHomeCourseEachWeek?: boolean;
+  /** Holes played each league week (typically 9). */
+  holesPerRound: 9 | 18;
+  /** Which nine at the home course (holes 1–9 or 10–18). */
+  nineSide: "front" | "back";
+  /** Default tee set for league rounds at the home course. */
+  defaultTeeBoxId: string;
+}
+
+export interface TeeBox {
+  id: string;
+  name: string;
+  yardage: number;
+  courseRating: number;
+  slopeRating: number;
 }
 
 export interface Course {
   id: string;
   name: string;
   holes: Hole[];
+  tees: TeeBox[];
   logoUrl?: string;
+}
+
+export type ScoreType = "home" | "away" | "competition";
+
+export interface RoundSetup {
+  sessionId: string;
+  courseId: string;
+  playDate: string;
+  holeCount: 9 | 18;
+  teeBoxId: string;
+  startHole: number;
+  scoreType: ScoreType;
+  courseHandicap: number;
 }
 
 export type DirectionalResult =
@@ -90,6 +150,8 @@ export interface WeeklyMatch {
   status: MatchStatus;
   foursomes: Foursome[];
   teamPairing: { homeTeamId: string; awayTeamId: string };
+  /** Short outcome for home “previous weeks” list, e.g. "Won 5–4". */
+  resultLabel?: string;
 }
 
 export interface MakeupProposal {
@@ -100,6 +162,8 @@ export interface MakeupProposal {
   teeTime: string;
   notes: string;
   createdAt: string;
+  /** Players in the match who have confirmed this proposed date. */
+  confirmedByPlayerIds: string[];
 }
 
 export type MakeupStatus = "open" | "confirmed" | "cancelled";

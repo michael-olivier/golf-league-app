@@ -33,7 +33,7 @@ function MatchPairCard({
   );
 
   return (
-    <div className="rounded-xl border border-fairway-800 bg-fairway-900/30 p-3">
+    <div className="rounded-[8px] border border-sand-hunter bg-white p-3">
       <p className="mb-3 text-center text-xs font-medium text-fairway-400">
         {result.strokeLabel}
       </p>

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { PageTitleSection } from "../components/PageTitleSection";
 import { HandicapBadge } from "../components/HandicapBadge";
 import { PlayerChip } from "../components/PlayerChip";
 import { useLeague } from "../store/LeagueContext";
@@ -35,11 +36,13 @@ export function HandicapsPage() {
   const myTeam = getTeam(currentPlayer.teamId);
 
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-fairway-400">
-        Handicap indexes from GHIN (mock data). In production, sync via the
-        USGA GHIN API with player authorization.
-      </p>
+    <div className="space-y-6 pb-4">
+      <PageTitleSection title="Handicaps">
+        <p className="text-sm text-fairway-400">
+          Handicap indexes from GHIN (mock data). In production, sync via the
+          USGA GHIN API with player authorization.
+        </p>
+      </PageTitleSection>
 
       <section>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-fairway-500">

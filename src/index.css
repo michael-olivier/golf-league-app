@@ -1,42 +1,45 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
+/* Sandbagger brand palette — light mode only */
 :root {
-  --ui-bg: #f7f4ef;
-  --ui-surface: #ffffff;
-  --ui-elevated: #fdfbf7;
-  --ui-border: #dedbd4;
-  --ui-border-strong: #c9c4bb;
-  --ui-active: #ece7df;
-  --ui-primary: #2f6f4e;
-  --ui-primary-strong: #25583f;
-  --ui-muted: #78716c;
-  --ui-subtle: #8f8982;
-  --ui-text-soft: #57534e;
-  --ui-text: #292524;
-  --ui-text-strong: #1c1917;
-}
+  --sand-hunter: #386641;
+  --sand-sage: #6a994e;
+  --sand-yellow-green: #a7c957;
+  --sand-champagne: #f2e8cf;
+  --sand-brick: #bc4749;
+  --sand-bg: #faf9f3;
+  --sand-star: #fcd918;
 
-.dark {
-  --ui-bg: #171717;
-  --ui-surface: #262626;
-  --ui-elevated: #2f2f2f;
-  --ui-border: #3f3f3f;
-  --ui-border-strong: #57534e;
-  --ui-active: #3a3733;
-  --ui-primary: #3f8f67;
-  --ui-primary-strong: #2f6f4e;
-  --ui-muted: #a8a29e;
-  --ui-subtle: #a8a29e;
-  --ui-text-soft: #d6d3d1;
-  --ui-text: #f5f5f4;
-  --ui-text-strong: #fafaf9;
+  --ui-bg: var(--sand-bg);
+  --ui-surface: #ffffff;
+  --ui-elevated: #ffffff;
+  --ui-border: #ddd0b8;
+  --ui-border-strong: #c4b59a;
+  --ui-active: #e5edc9;
+  --ui-primary: var(--sand-hunter);
+  --ui-primary-strong: #2d5238;
+  --ui-accent: var(--sand-yellow-green);
+  --ui-danger: var(--sand-brick);
+  --ui-muted: #6b7f62;
+  --ui-subtle: #5a7150;
+  --ui-text-soft: #3d5238;
+  --ui-text: #2a3d2e;
+  --ui-text-strong: #1e3321;
+
+  /* Clearance below iPhone Dynamic Island — applied on `.page-scroll` */
+  --page-top-inset: 60px;
 }
 
 @theme {
-  /* Scandinavian-inspired neutrals; green is reserved for primary actions. */
-  --color-fairway-50: #fafaf9;
+  --color-sand-hunter: #386641;
+  --color-sand-sage: #6a994e;
+  --color-sand-yellow-green: #a7c957;
+  --color-sand-champagne: #f2e8cf;
+  --color-sand-brick: #bc4749;
+  --color-sand-bg: #faf9f3;
+  --color-sand-star: #fcd918;
+
+  --color-fairway-50: var(--sand-bg);
   --color-fairway-100: var(--ui-active);
   --color-fairway-200: var(--ui-text);
   --color-fairway-300: var(--ui-text-soft);
@@ -48,20 +51,30 @@
   --color-fairway-900: var(--ui-surface);
   --color-fairway-950: var(--ui-bg);
   --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --spacing-page-top: var(--page-top-inset);
+
+  /* border-2 → 1px (default `border` overridden in @layer utilities below) */
+  --border-width-2: 1px;
 }
 
 html {
+  color-scheme: light;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: #0f1419;
+  background: #141f18;
   color: var(--ui-text);
   @apply antialiased;
   min-height: 100dvh;
 }
 
 #root {
+  min-height: 100dvh;
+}
+
+.device-native {
+  width: 100%;
   min-height: 100dvh;
 }
 
@@ -72,9 +85,9 @@ body {
   justify-content: center;
   padding: 1.5rem 1rem;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgb(47 111 78 / 0.22), transparent),
-    radial-gradient(ellipse 60% 50% at 100% 100%, rgb(30 58 95 / 0.35), transparent),
-    #0f1419;
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgb(56 102 65 / 0.45), transparent),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgb(106 153 78 / 0.25), transparent),
+    #141f18;
 }
 
 .iphone-frame {
@@ -172,4 +185,126 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+.week-slide-viewport {
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.week-slide-track {
+  display: flex;
+  transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.week-slide-track--animating {
+  width: 200%;
+}
+
+.week-slide-track--idle {
+  width: 100%;
+  transition: none;
+}
+
+.week-slide-panel {
+  flex: 0 0 50%;
+  min-width: 0;
+}
+
+.week-slide-panel--solo {
+  flex: 0 0 100%;
+}
+
+@keyframes home-rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 32px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.home-rise-in {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  animation: home-rise-in 0.72s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes home-logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(16px);
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Duration must match HOME_LOGO_ANIM_MS in homeMotion.ts */
+.home-logo-in {
+  transform-origin: center center;
+  backface-visibility: hidden;
+  animation: home-logo-in 0.95s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-rise-in,
+  .home-logo-in {
+    animation: none;
+  }
+}
+
+.page-title-gutter {
+  padding-left: 12px;
+}
+
+/* Top inset on the scrollport so content can move under the Dynamic Island */
+.page-scroll {
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-top: var(--page-top-inset);
+  -webkit-overflow-scrolling: touch;
+}
+
+.card-title {
+  font-size: 12px;
+  @apply font-bold uppercase tracking-wider text-fairway-500;
+}
+
+/* Hairline borders (0.5px) — unlayered so these override Tailwind utilities */
+.border {
+  border-width: 0.5px;
+}
+.border-x {
+  border-left-width: 0.5px;
+  border-right-width: 0.5px;
+}
+.border-y {
+  border-top-width: 0.5px;
+  border-bottom-width: 0.5px;
+}
+.border-t {
+  border-top-width: 0.5px;
+}
+.border-r {
+  border-right-width: 0.5px;
+}
+.border-b {
+  border-bottom-width: 0.5px;
+}
+.border-l {
+  border-left-width: 0.5px;
 }

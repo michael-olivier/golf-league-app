@@ -7,5 +7,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: env.VITE_BASE_PATH || "/",
     plugins: [react(), tailwindcss()],
+    build: {
+      outDir: env.VITE_OUT_DIR || "dist",
+      emptyOutDir: true,
+    },
   };
 });

@@ -43,6 +43,16 @@ jobs:
         with:
           path: dist
 
+      - name: Refresh prototypes hub (optional)
+        env:
+          GH_TOKEN: ${{ secrets.PROTOTYPES_HUB_PAT }}
+        run: |
+          if [ -n "${GH_TOKEN}" ]; then
+            gh api repos/michael-olivier/prototypes/dispatches \
+              -f event_type=refresh
+          fi
+        continue-on-error: true
+
   deploy:
     needs: build
     runs-on: ubuntu-latest

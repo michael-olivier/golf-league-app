@@ -7,6 +7,17 @@ export function formatToPar(toPar: number | null): string {
   return toPar > 0 ? `+${toPar}` : `${toPar}`;
 }
 
+/** GIR when strokes to reach the green (total strokes − putts) ≤ par − 2. */
+export function greenInRegulationHit(
+  par: number,
+  strokes: number | null,
+  putts: number | null,
+): boolean | null {
+  if (strokes === null || putts === null) return null;
+  if (putts < 0 || putts > strokes) return false;
+  return strokes - putts <= par - 2;
+}
+
 export function holeToPar(strokes: number | null, par: number): string {
   if (strokes === null) return "—";
   const diff = strokes - par;
@@ -19,23 +30,24 @@ export function holeToPar(strokes: number | null, par: number): string {
   return `+${diff}`;
 }
 
-export function statsSummary(scores: HoleScore[]) {
+export function statsSummary(scores: HoleScore[], pars: number[]) {
   let gir = 0;
   let fir = 0;
   let putts = 0;
   let puttHoles = 0;
   let penalties = 0;
 
-  for (const s of scores) {
-    if (!isDetailedScore(s)) continue;
-    if (s.greenInRegulation === "center") gir++;
+  scores.forEach((s, i) => {
+    if (!isDetailedScore(s)) return;
+    const par = pars[i] ?? 4;
+    if (greenInRegulationHit(par, s.strokes, s.putts) === true) gir++;
     if (s.fairwayHit === "center") fir++;
     if (s.putts !== null) {
       putts += s.putts;
       puttHoles++;
     }
     penalties += s.penalties;
-  }
+  });
 
   return {
     gir,

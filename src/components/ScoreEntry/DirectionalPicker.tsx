@@ -1,16 +1,12 @@
 import type { DirectionalResult } from "../../types";
 
-const directions: {
-  id: DirectionalResult;
-  label: string;
-  gridArea: string;
-}[] = [
-  { id: "forward", label: "Forward", gridArea: "forward" },
-  { id: "left", label: "Left", gridArea: "left" },
-  { id: "center", label: "Center", gridArea: "center" },
-  { id: "right", label: "Right", gridArea: "right" },
-  { id: "back", label: "Back", gridArea: "back" },
-];
+const directionLabels: Record<DirectionalResult, string> = {
+  forward: "Forward",
+  left: "Left",
+  center: "Center",
+  right: "Right",
+  back: "Back",
+};
 
 function Icon({
   direction,
@@ -101,48 +97,41 @@ export function DirectionalPicker({
   const buttonSize = compact ? "h-9 w-9" : "h-11 w-11";
   const iconSize = compact ? "h-3.5 w-3.5" : "h-4 w-4";
 
+  const renderButton = (id: DirectionalResult) => {
+    const selected = value === id;
+    return (
+      <button
+        type="button"
+        role="radio"
+        aria-label={directionLabels[id]}
+        aria-checked={selected}
+        onClick={() => onChange(selected ? null : id)}
+        className={`flex ${buttonSize} shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+          selected
+            ? "border-sand-hunter bg-sand-hunter text-white"
+            : "border-sand-hunter bg-white text-sand-sage"
+        }`}
+      >
+        <Icon direction={id} className={iconSize} />
+      </button>
+    );
+  };
+
   return (
     <div className={className} role="radiogroup" aria-label={label}>
       <p
-        className={`mb-2 text-center font-semibold text-fairway-200 ${
-          compact ? "text-xs" : "text-sm"
-        }`}
+        className="mb-2 text-center text-sm font-bold uppercase tracking-wider text-[#373737]"
       >
         {label}
       </p>
-      <div
-        className={`mx-auto grid w-full max-w-[10rem] grid-cols-3 grid-rows-3 place-items-center ${
-          compact ? "gap-1.5" : "gap-2"
-        }`}
-        style={{
-          gridTemplateAreas: `
-            ". forward ."
-            "left center right"
-            ". back ."
-          `,
-        }}
-      >
-        {directions.map((dir) => {
-          const selected = value === dir.id;
-          return (
-            <button
-              key={dir.id}
-              type="button"
-              role="radio"
-              aria-label={dir.label}
-              aria-checked={selected}
-              style={{ gridArea: dir.gridArea }}
-              onClick={() => onChange(dir.id)}
-              className={`flex ${buttonSize} items-center justify-center rounded-full border transition-colors ${
-                selected
-                  ? "border-fairway-100 bg-fairway-100 text-fairway-950"
-                  : "border-fairway-600 bg-fairway-950 text-fairway-400 hover:border-fairway-500"
-              }`}
-            >
-              <Icon direction={dir.id} className={iconSize} />
-            </button>
-          );
-        })}
+      <div className="mx-auto flex w-fit flex-col items-center gap-2">
+        {renderButton("forward")}
+        <div className="flex items-center gap-2">
+          {renderButton("left")}
+          {renderButton("center")}
+          {renderButton("right")}
+        </div>
+        {renderButton("back")}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PageTitleSection } from "../components/PageTitleSection";
 import type { Foursome, WeeklyMatch } from "../types";
 import { useLeague } from "../store/LeagueContext";
 
@@ -62,11 +63,13 @@ export function AdminPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-fairway-400">
-        Set up weekly team matches and foursome pairings. Data is stored locally
-        for this demo.
-      </p>
+    <div className="space-y-6 pb-4">
+      <PageTitleSection title="Admin">
+        <p className="text-sm text-fairway-400">
+          Set up weekly team matches and foursome pairings. Data is stored
+          locally for this demo.
+        </p>
+      </PageTitleSection>
 
       <section className="rounded-xl border border-fairway-800 bg-fairway-900/30 p-4 space-y-3">
         <h2 className="font-semibold text-fairway-200">New match</h2>

@@ -7,13 +7,27 @@ import type {
   Team,
   WeeklyMatch,
 } from "../types";
+import { roundKey } from "../types";
+import { buildSimpleRound } from "../utils/matchScorecard";
+import { playerPortraitPath } from "../utils/playerAvatarUrl";
 
 export const league: League = {
-  id: "league-fairway",
-  name: "Fairway League",
-  logoUrl: "/logos/fairway-league.svg",
+  id: "league-sandbagger",
+  name: "Sandbagger",
+  logoUrl: "/logos/sandbagger.png",
+  homeLogoUrl: "/logos/sandbagger-horizontal.png",
   homeCourseId: "course-oakmont",
   sameHomeCourseEachWeek: true,
+  holesPerRound: 9,
+  nineSide: "front",
+  defaultTeeBoxId: "oakmont-blue",
+  director: {
+    id: "courtney-houska",
+    name: "Courtney Houska",
+    role: "League Director",
+    email: "courtney.houska@oakmontvalley.example",
+    phone: "(303) 555-0142",
+  },
 };
 
 const teamColors = [
@@ -31,7 +45,7 @@ const teamColors = [
 
 const roster = {
   A: [
-    { team: "Aces", players: ["Mike Olivier", "Sarah Chen"] },
+    { team: "Aces", players: ["Michael Olivier", "Sarah Chen"] },
     { team: "Birdie Hunters", players: ["Tom Bradley", "Anna Reyes"] },
     { team: "Pin Seekers", players: ["James Park", "Lisa Morgan"] },
     { team: "Green Jackets", players: ["Dave Wilson", "Kate Nguyen"] },
@@ -84,10 +98,25 @@ function playerId(leagueLevel: "A" | "B", teamIndex: number, playerIndex: number
   return `player-${leagueLevel.toLowerCase()}-${String(teamIndex + 1).padStart(2, "0")}-${playerIndex + 1}`;
 }
 
+/** Spread indexes so head-to-head match play allocates visible strokes (pops). */
+function mockHandicapIndex(
+  leagueLevel: "A" | "B",
+  teamIndex: number,
+  playerIndex: number,
+): number {
+  const base = leagueLevel === "A" ? 4.0 : 15.0;
+  const teamOffset = leagueLevel === "A" ? 5.0 : 4.5;
+  const partnerGap = leagueLevel === "A" ? 7.0 : 6.0;
+  // Alternate team strength so foursome pairs (0 vs 2, 1 vs 3) get stroke gaps
+  const teamScratch =
+    base + (teamIndex % 2) * teamOffset + Math.floor(teamIndex / 2) * 0.4;
+  return Number((teamScratch + playerIndex * partnerGap).toFixed(1));
+}
+
 export const teams: Team[] = (["A", "B"] as const).flatMap((leagueLevel) =>
   roster[leagueLevel].map((entry, index) => ({
     id: teamId(leagueLevel, index),
-    name: `${leagueLevel} ${entry.team}`,
+    name: entry.team,
     color: teamColors[index % teamColors.length],
     leagueLevel,
   })),
@@ -95,39 +124,145 @@ export const teams: Team[] = (["A", "B"] as const).flatMap((leagueLevel) =>
 
 export const players: Player[] = (["A", "B"] as const).flatMap((leagueLevel) =>
   roster[leagueLevel].flatMap((entry, teamIndex) =>
-    entry.players.map((name, playerIndex) => ({
-      id: playerId(leagueLevel, teamIndex, playerIndex),
-      name,
-      ghinNumber: `${leagueLevel === "A" ? "1" : "2"}${String(teamIndex + 1).padStart(2, "0")}${playerIndex + 1}00${teamIndex + playerIndex + 7}`,
-      handicapIndex: Number(
-        (
-          (leagueLevel === "A" ? 4.2 : 13.8) +
-          teamIndex * (leagueLevel === "A" ? 0.42 : 0.36) +
-          playerIndex * 1.3
-        ).toFixed(1),
-      ),
-      teamId: teamId(leagueLevel, teamIndex),
-    })),
+    entry.players.map((name, playerIndex) => {
+      const id = playerId(leagueLevel, teamIndex, playerIndex);
+      return {
+        id,
+        name,
+        avatarUrl: playerPortraitPath(leagueLevel, teamIndex, playerIndex),
+        ghinNumber: `${leagueLevel === "A" ? "1" : "2"}${String(teamIndex + 1).padStart(2, "0")}${playerIndex + 1}00${teamIndex + playerIndex + 7}`,
+        handicapIndex: mockHandicapIndex(leagueLevel, teamIndex, playerIndex),
+        teamId: teamId(leagueLevel, teamIndex),
+        ...(id === "player-a-01-1"
+          ? {
+              recentRound: {
+                courseId: "course-oakmont",
+                playedOn: "2026-05-24",
+                holeCount: 9,
+                strokes: 42,
+              },
+              recentScoreToParTrend: [8, 7, 6, 5, 6],
+            }
+          : {}),
+        seasonStats: {
+          roundsPlayed: 2 + (teamIndex % 4),
+          averageScore: Math.round(39 + playerIndex + teamIndex * 0.6),
+          matchWins: 1 + (teamIndex % 3),
+          matchLosses: teamIndex % 2,
+        },
+      };
+    }),
   ),
 );
 
 const standardPars = [4, 5, 4, 3, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5, 4];
 const standardHandicaps = [7, 3, 11, 15, 1, 9, 17, 5, 13, 8, 16, 2, 12, 4, 18, 6, 10, 14];
 
+const oakmontHoles = standardPars.map((par, i) => {
+  const number = i + 1;
+  return {
+    number,
+    par,
+    ...(par === 5 && (number === 2 || number === 8 || number === 12 || number === 17)
+      ? { parWomen: 4 }
+      : {}),
+    handicapIndex: standardHandicaps[i],
+  };
+});
+
 export const courses: Course[] = [
   {
     id: "course-oakmont",
     name: "Oakmont Valley Golf Club",
     logoUrl: "/logos/oakmont-valley.svg",
-    holes: standardPars.map((par, i) => ({
-      number: i + 1,
-      par,
-      handicapIndex: standardHandicaps[i],
-    })),
+    holes: oakmontHoles,
+    tees: [
+      {
+        id: "oakmont-blue",
+        name: "Blue",
+        yardage: 6520,
+        courseRating: 71.2,
+        slopeRating: 132,
+      },
+      {
+        id: "oakmont-white",
+        name: "White",
+        yardage: 6048,
+        courseRating: 68.9,
+        slopeRating: 126,
+      },
+      {
+        id: "oakmont-gold",
+        name: "Gold",
+        yardage: 5580,
+        courseRating: 66.1,
+        slopeRating: 118,
+      },
+    ],
+  },
+  {
+    id: "course-pinehurst",
+    name: "Pinehurst Links",
+    holes: oakmontHoles,
+    tees: [
+      {
+        id: "pine-blue",
+        name: "Blue",
+        yardage: 6310,
+        courseRating: 70.4,
+        slopeRating: 128,
+      },
+      {
+        id: "pine-white",
+        name: "White",
+        yardage: 5890,
+        courseRating: 67.8,
+        slopeRating: 121,
+      },
+    ],
   },
 ];
 
 export const matches: WeeklyMatch[] = [
+  {
+    id: "match-week-1",
+    weekNumber: 1,
+    date: "2026-05-17",
+    courseId: "course-oakmont",
+    gameType: "Stroke play",
+    status: "completed",
+    teamPairing: {
+      homeTeamId: "team-a-01",
+      awayTeamId: "team-a-05",
+    },
+    foursomes: [
+      {
+        id: "foursome-week-1",
+        matchId: "match-week-1",
+        playerIds: [
+          "player-a-01-1",
+          "player-a-01-2",
+          "player-a-05-1",
+          "player-a-05-2",
+        ],
+        designatedScorerId: "player-a-01-1",
+      },
+    ],
+    resultLabel: "Won 5–4",
+  },
+  {
+    id: "match-week-2",
+    weekNumber: 2,
+    date: "2026-05-24",
+    courseId: "course-oakmont",
+    gameType: "Best ball",
+    status: "completed",
+    teamPairing: {
+      homeTeamId: "team-a-03",
+      awayTeamId: "team-a-04",
+    },
+    foursomes: [],
+  },
   {
     id: "match-week-3",
     weekNumber: 3,
@@ -196,6 +331,7 @@ export const makeupRequests: MakeupRequest[] = [
         teeTime: "17:30",
         notes: "Twilight rates — can we do late afternoon?",
         createdAt: "2026-06-01T10:15:00",
+        confirmedByPlayerIds: ["player-a-02-1", "player-a-02-2"],
       },
       {
         id: "proposal-2",
@@ -205,10 +341,25 @@ export const makeupRequests: MakeupRequest[] = [
         teeTime: "16:00",
         notes: "Works better for our side after work.",
         createdAt: "2026-06-02T08:30:00",
+        confirmedByPlayerIds: ["player-a-01-2", "player-a-01-1"],
       },
     ],
   },
 ];
+
+const week1StrokeLines: Record<string, number[]> = {
+  "player-a-01-1": [5, 5, 4, 3, 5, 4, 3, 5, 4],
+  "player-a-01-2": [4, 6, 4, 4, 4, 5, 3, 6, 4],
+  "player-a-05-1": [5, 6, 5, 4, 5, 5, 4, 6, 5],
+  "player-a-05-2": [6, 5, 5, 3, 5, 5, 4, 7, 5],
+};
+
+const week1Rounds = Object.fromEntries(
+  Object.entries(week1StrokeLines).map(([playerId, strokes]) => [
+    roundKey("match-week-1", playerId),
+    buildSimpleRound(playerId, strokes),
+  ]),
+);
 
 export const initialLeagueState: LeagueState = {
   league,
@@ -219,5 +370,5 @@ export const initialLeagueState: LeagueState = {
   courses,
   matches,
   makeupRequests,
-  rounds: {},
+  rounds: week1Rounds,
 };

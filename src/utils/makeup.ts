@@ -41,3 +41,25 @@ export function formatMakeupDateTime(date: string, teeTime: string): string {
 export function playersOnTeam(players: Player[], teamId: string): Player[] {
   return players.filter((p) => p.teamId === teamId);
 }
+
+export function playersInMatch(
+  players: Player[],
+  match: WeeklyMatch,
+): Player[] {
+  const { homeTeamId, awayTeamId } = match.teamPairing;
+  return players.filter(
+    (p) => p.teamId === homeTeamId || p.teamId === awayTeamId,
+  );
+}
+
+export function allMatchPlayersConfirmedProposal(
+  proposal: { confirmedByPlayerIds: string[] },
+  match: WeeklyMatch,
+  players: Player[],
+): boolean {
+  const roster = playersInMatch(players, match);
+  return (
+    roster.length > 0 &&
+    roster.every((p) => proposal.confirmedByPlayerIds.includes(p.id))
+  );
+}

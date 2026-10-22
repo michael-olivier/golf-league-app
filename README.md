@@ -1,4 +1,4 @@
-# Fairway League (golf-league-app)
+# Sandbagger (golf-league-app)
 
 A mobile-friendly golf league web app for weekly team matches, score entry, GHIN handicaps, and USGA rules reference.
 
@@ -24,15 +24,28 @@ Open the URL shown in the terminal (usually `http://localhost:5173`).
 
 ## GitHub Pages
 
-Pushes to `main` deploy via GitHub Actions. After the workflow succeeds, the app is at:
+Pushes to `main` deploy via GitHub Actions to:
 
-`https://<your-github-username>.github.io/golf-league-app/`
+**https://michael-olivier.github.io/golf-league-app/**
+
+All demos are listed on the separate prototypes hub:
+
+**https://michael-olivier.github.io/prototypes/**
+
+Source for the hub lives in [`prototypes/`](prototypes/) (publish as the `michael-olivier/prototypes` repo).
+
+Local Pages preview:
+
+```bash
+npm run build
+VITE_BASE_PATH=/golf-league-app/ npx vite preview
+```
 
 In the repo **Settings → Pages**, source should be **GitHub Actions** (enabled automatically on first deploy).
 
 ## Splash / branding
 
-Set `league.logoUrl` in `src/data/mock.ts` for the league mark; if omitted, `courses[].logoUrl` on the home course is used. Assets live in `public/logos/`.
+Set `league.logoUrl` (splash) and optional `league.homeLogoUrl` (home header) in `src/data/mock.ts`; if splash logo is omitted, `courses[].logoUrl` on the home course is used. Assets live in `public/logos/`.
 
 ## Demo user
 

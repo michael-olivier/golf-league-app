@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PageTitleSection } from "../components/PageTitleSection";
 import { usgaRulesSections } from "../data/usgaRules";
 
 export function RulesPage() {
@@ -7,11 +8,13 @@ export function RulesPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-fairway-400">
-        Quick reference for league play. For official rulings, see the full
-        USGA Rules of Golf.
-      </p>
+    <div className="space-y-4 pb-4">
+      <PageTitleSection title="Rules">
+        <p className="text-sm text-fairway-400">
+          Quick reference for league play. For official rulings, see the full
+          USGA Rules of Golf.
+        </p>
+      </PageTitleSection>
 
       <ul className="space-y-2">
         {usgaRulesSections.map((section) => {

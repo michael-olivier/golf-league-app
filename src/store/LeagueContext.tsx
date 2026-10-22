@@ -7,8 +7,14 @@ import {
   type ReactNode,
 } from "react";
 import { initialLeagueState } from "../data/mock";
-import { isOnMatchTeam, makeupForMatch, opponentTeamId } from "../utils/makeup";
+import {
+  allMatchPlayersConfirmedProposal,
+  isOnMatchTeam,
+  makeupForMatch,
+} from "../utils/makeup";
+import { matchRoundHasStarted } from "../utils/matchScores";
 import type {
+  Course,
   Foursome,
   HoleScore,
   LeagueState,
@@ -32,6 +38,7 @@ interface LeagueContextValue {
   getPlayer: (id: string) => LeagueState["players"][0] | undefined;
   getTeam: (id: string) => LeagueState["teams"][0] | undefined;
   getCourse: (id: string) => LeagueState["courses"][0] | undefined;
+  upsertCourse: (course: Course) => void;
   getFoursomeForUser: (matchId: string) => Foursome | undefined;
   getRound: (matchId: string, playerId: string) => PlayerRound | undefined;
   ensureRound: (
@@ -107,6 +114,18 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     (id: string) => state.courses.find((c) => c.id === id),
     [state.courses],
   );
+
+  const upsertCourse = useCallback((course: Course) => {
+    setState((prev) => {
+      const index = prev.courses.findIndex((c) => c.id === course.id);
+      if (index >= 0) {
+        const courses = [...prev.courses];
+        courses[index] = course;
+        return { ...prev, courses };
+      }
+      return { ...prev, courses: [...prev.courses, course] };
+    });
+  }, []);
 
   const getFoursomeForUser = useCallback(
     (matchId: string) => {
@@ -205,21 +224,27 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
 
   const setDesignatedScorer = useCallback(
     (matchId: string, foursomeId: string, playerId: string | null) => {
-      setState((prev) => ({
-        ...prev,
-        matches: prev.matches.map((m) =>
-          m.id !== matchId
-            ? m
-            : {
-                ...m,
-                foursomes: m.foursomes.map((f) =>
-                  f.id !== foursomeId
-                    ? f
-                    : { ...f, designatedScorerId: playerId },
-                ),
-              },
-        ),
-      }));
+      setState((prev) => {
+        const match = prev.matches.find((m) => m.id === matchId);
+        if (matchRoundHasStarted(match, prev)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          matches: prev.matches.map((m) =>
+            m.id !== matchId
+              ? m
+              : {
+                  ...m,
+                  foursomes: m.foursomes.map((f) =>
+                    f.id !== foursomeId
+                      ? f
+                      : { ...f, designatedScorerId: playerId },
+                  ),
+                },
+          ),
+        };
+      });
     },
     [],
   );
@@ -327,6 +352,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
           teeTime: input.teeTime,
           notes: input.notes.trim(),
           createdAt: new Date().toISOString(),
+          confirmedByPlayerIds: [prev.currentUserId],
         };
 
         return {
@@ -352,11 +378,46 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
         if (!proposal) return prev;
 
         const match = prev.matches.find((m) => m.id === makeup.matchId);
-        if (!match) return prev;
+        if (!match || !isOnMatchTeam(match, currentPlayer.teamId)) return prev;
 
-        const opponent = opponentTeamId(match, currentPlayer.teamId);
-        if (!opponent || proposal.proposedByTeamId === currentPlayer.teamId) {
+        if (proposal.confirmedByPlayerIds.includes(prev.currentUserId)) {
           return prev;
+        }
+
+        const updatedProposal: MakeupProposal = {
+          ...proposal,
+          confirmedByPlayerIds: [
+            ...proposal.confirmedByPlayerIds,
+            prev.currentUserId,
+          ],
+        };
+
+        const lockIn = allMatchPlayersConfirmedProposal(
+          updatedProposal,
+          match,
+          prev.players,
+        );
+
+        const makeupRequests = prev.makeupRequests.map((m) => {
+          if (m.id !== makeupId) return m;
+          return {
+            ...m,
+            proposals: lockIn
+              ? [updatedProposal]
+              : m.proposals.map((p) =>
+                  p.id === proposalId ? updatedProposal : p,
+                ),
+            ...(lockIn
+              ? {
+                  status: "confirmed" as const,
+                  confirmedProposalId: proposalId,
+                }
+              : {}),
+          };
+        });
+
+        if (!lockIn) {
+          return { ...prev, makeupRequests };
         }
 
         return {
@@ -366,19 +427,11 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
               ? m
               : {
                   ...m,
-                  date: proposal.date,
+                  date: updatedProposal.date,
                   status: "scheduled" as const,
                 },
           ),
-          makeupRequests: prev.makeupRequests.map((m) =>
-            m.id !== makeupId
-              ? m
-              : {
-                  ...m,
-                  status: "confirmed" as const,
-                  confirmedProposalId: proposalId,
-                },
-          ),
+          makeupRequests,
         };
       });
     },
@@ -393,6 +446,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       getPlayer,
       getTeam,
       getCourse,
+      upsertCourse,
       getFoursomeForUser,
       getRound,
       ensureRound,
@@ -416,6 +470,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       getPlayer,
       getTeam,
       getCourse,
+      upsertCourse,
       getFoursomeForUser,
       getRound,
       ensureRound,
