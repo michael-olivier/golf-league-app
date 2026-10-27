@@ -86,17 +86,48 @@ export interface Course {
   logoUrl?: string;
 }
 
-export type ScoreType = "home" | "away" | "competition";
+/** Casual round vs tournament round (GHIN posting category). */
+export type ScoreType = "casual" | "tournament";
+
+/** Derived from GHIN home course vs selected course — not user-selected. */
+export type ScorePostingSide = "home" | "away";
+
+export type HolesChoice = "9" | "18" | "not_sure";
+
+export type CasualScoringMode = "match_net" | "match_gross" | "stroke";
+
+export interface ScoringGolfer {
+  id: string;
+  name: string;
+  handicapIndex: number;
+  homeCourseName: string;
+  ghinNumber?: string;
+  ratedTees?: "male" | "female";
+  /** Per-golfer tee when different from the round default. */
+  teeBoxId?: string;
+  avatarUrl?: string;
+}
 
 export interface RoundSetup {
   sessionId: string;
   courseId: string;
   playDate: string;
+  holesChoice: HolesChoice;
   holeCount: 9 | 18;
   teeBoxId: string;
   startHole: number;
   scoreType: ScoreType;
+  scorePostingSide: ScorePostingSide;
+  scoringMode: CasualScoringMode;
+  playerCount: 1 | 2 | 3 | 4;
   courseHandicap: number;
+  /** Golfers in this casual round (1–4), including the current user. */
+  scoringGolfers: ScoringGolfer[];
+  teamsEnabled?: boolean;
+  /** Team index (0 or 1) when `teamsEnabled` and 3–4 players. */
+  teamByGolferId?: Record<string, 0 | 1>;
+  /** Course handicap per golfer for stroke / net scoring. */
+  golferCourseHandicaps?: Record<string, number>;
 }
 
 export type DirectionalResult =

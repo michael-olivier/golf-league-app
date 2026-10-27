@@ -51,10 +51,10 @@ function AppRoutes() {
 
   return (
     <IphoneFrame>
-      <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         {!splashDone && <SplashPage onComplete={finishSplash} />}
         {splashDone && (
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <BrowserRouter basename={routerBasename}>
               <Routes>
                 <Route path="app/*" element={<LegacyAppPathRedirect />} />

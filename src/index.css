@@ -5,7 +5,10 @@
   --sand-hunter: #386641;
   --sand-sage: #6a994e;
   --sand-yellow-green: #a7c957;
+  --sand-score-mist: #eff5e0;
+  --sand-score-border: var(--ui-border-strong);
   --sand-champagne: #f2e8cf;
+  --sand-vanilla-custard: #cdd993;
   --sand-brick: #bc4749;
   --sand-bg: #faf9f3;
   --sand-star: #fcd918;
@@ -34,7 +37,10 @@
   --color-sand-hunter: #386641;
   --color-sand-sage: #6a994e;
   --color-sand-yellow-green: #a7c957;
+  --color-sand-score-mist: #eff5e0;
+  --color-sand-score-border: #c4b59a;
   --color-sand-champagne: #f2e8cf;
+  --color-sand-vanilla-custard: #cdd993;
   --color-sand-brick: #bc4749;
   --color-sand-bg: #faf9f3;
   --color-sand-star: #fcd918;
@@ -70,12 +76,17 @@ body {
 }
 
 #root {
+  display: flex;
   min-height: 100dvh;
+  flex-direction: column;
 }
 
 .device-native {
   width: 100%;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .device-showcase {
@@ -92,7 +103,7 @@ body {
 
 .iphone-frame {
   position: relative;
-  width: min(390px, calc(100vw - 2rem));
+  width: min(402px, calc(100vw - 2rem));
   height: min(844px, calc(100dvh - 3rem));
   padding: 14px;
   border-radius: 3.25rem;
@@ -276,12 +287,52 @@ input[type="number"] {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   padding-top: var(--page-top-inset);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .card-title {
   font-size: 12px;
   @apply font-bold uppercase tracking-wider text-fairway-500;
+}
+
+.score-section-title {
+  font-size: 12px;
+  @apply mb-2 font-bold uppercase tracking-wider text-[#000];
+}
+
+@keyframes bottom-sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes bottom-sheet-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.bottom-sheet-scrim-enter {
+  animation: bottom-sheet-scrim-in 220ms ease-out both;
+}
+
+.bottom-sheet-panel-enter {
+  animation: bottom-sheet-rise 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-sheet-scrim-enter,
+  .bottom-sheet-panel-enter {
+    animation: none;
+  }
 }
 
 /* Hairline borders (0.5px) — unlayered so these override Tailwind utilities */

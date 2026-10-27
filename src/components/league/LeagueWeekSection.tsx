@@ -154,7 +154,7 @@ export function LeagueWeekSection() {
       return (
         <div
           key={key}
-          className={`${panelClass} rounded-[8px] border border-sand-hunter bg-white p-5`}
+          className={`${panelClass} rounded-[12px] border border-sand-hunter bg-white p-5`}
         >
           <p className="text-fairway-500">No match for this week.</p>
         </div>
@@ -181,7 +181,7 @@ export function LeagueWeekSection() {
     <div className="space-y-4">
       <section
         ref={weekSwipeRef}
-        className="week-slide-viewport rounded-[8px]"
+        className="week-slide-viewport rounded-[12px]"
         {...weekSwipe}
         aria-label="Weekly match. Swipe left or right for other weeks."
       >
@@ -203,7 +203,7 @@ export function LeagueWeekSection() {
       {canEnterScores ? (
         <Link
           to="/scores/league"
-          className="flex items-center justify-between rounded-[8px] bg-sand-hunter px-5 py-4 text-sm font-semibold text-white transition active:scale-[0.98]"
+          className="flex items-center justify-between rounded-[12px] bg-sand-hunter px-5 py-4 text-sm font-semibold text-white transition active:scale-[0.98]"
         >
           <span>Score league match</span>
           <span className="text-xl" aria-hidden>
@@ -212,7 +212,7 @@ export function LeagueWeekSection() {
         </Link>
       ) : scoresLocked ? (
         <div
-          className="flex cursor-not-allowed items-center justify-center gap-2 rounded-[8px] border border-fairway-800 bg-fairway-950/40 px-5 py-4 text-sm font-semibold text-fairway-500"
+          className="flex cursor-not-allowed items-center justify-center gap-2 rounded-[12px] border border-fairway-800 bg-fairway-950/40 px-5 py-4 text-sm font-semibold text-fairway-500"
           aria-disabled
         >
           <LockIcon />
@@ -220,7 +220,7 @@ export function LeagueWeekSection() {
         </div>
       ) : (
         <div
-          className="flex cursor-not-allowed items-center justify-center rounded-[8px] border border-fairway-800 bg-fairway-950/40 px-5 py-4 text-sm font-semibold text-fairway-500"
+          className="flex cursor-not-allowed items-center justify-center rounded-[12px] border border-fairway-800 bg-fairway-950/40 px-5 py-4 text-sm font-semibold text-fairway-500"
           aria-disabled
         >
           Score league match

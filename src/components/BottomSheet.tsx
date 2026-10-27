@@ -63,14 +63,14 @@ export function BottomSheet({
       <button
         type="button"
         aria-label="Close"
-        className={`absolute inset-0 ${scrimClassName}`}
+        className={`bottom-sheet-scrim-enter absolute inset-0 ${scrimClassName}`}
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
-        className={`relative z-10 flex flex-col rounded-t-[8px] border border-b-0 border-sand-hunter shadow-[0_-8px_32px_rgb(0_0_0_/0.12)] ${
+        className={`bottom-sheet-panel-enter relative z-10 flex flex-col rounded-t-[8px] border border-b-0 border-sand-hunter shadow-[0_-8px_32px_rgb(0_0_0_/0.12)] ${
           isWhite ? "bg-white" : "bg-sand-champagne"
         } ${heightClass} ${compact ? "shrink-0" : ""}`}
       >

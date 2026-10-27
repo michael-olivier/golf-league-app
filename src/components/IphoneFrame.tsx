@@ -25,7 +25,7 @@ export function IphoneFrame({ children }: IphoneFrameProps) {
 
   if (!showFrame) {
     return (
-      <div className="device-native flex min-h-dvh flex-col bg-fairway-950">
+      <div className="device-native flex flex-col bg-fairway-950">
         <AppViewport>{children}</AppViewport>
       </div>
     );

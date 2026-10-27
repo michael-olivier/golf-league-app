@@ -142,7 +142,7 @@ export function HomePage() {
   }, [playEntrance]);
 
   return (
-    <div className="min-h-full flex-1 space-y-4 pb-4">
+    <div className="space-y-4 pb-4">
       {homeLogoUrl ? (
         <div className="flex justify-center py-2">
           <img

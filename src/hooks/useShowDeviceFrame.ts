@@ -22,3 +22,8 @@ export function useShowDeviceFrame(): boolean {
 
   return showFrame;
 }
+
+/** Full-screen phone layout (no iPhone bezel) — same breakpoint as frame hook. */
+export function useIsMobileNative(): boolean {
+  return !useShowDeviceFrame();
+}

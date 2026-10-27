@@ -74,7 +74,7 @@ export function DetailedHoleInput({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       <HoleScoreStepper
         holeNumber={holeNumber}
         par={par}
@@ -83,55 +83,53 @@ export function DetailedHoleInput({
         navigation={navigation}
       />
 
-      <div className="space-y-5">
-        {par >= 4 ? (
-          <div className="flex justify-center">
-            <DirectionalPicker
-              label="Fairway"
-              compact
-              value={score.fairwayHit}
-              onChange={(fairwayHit) => patch({ fairwayHit })}
-            />
-          </div>
-        ) : null}
-
-        <div className="grid min-w-0 grid-cols-2 gap-2">
-          <StatStepper
-            label="Putts"
-            value={score.putts ?? "—"}
-            onDecrement={() =>
-              patch({
-                putts: Math.max(0, (score.putts ?? 2) - 1),
-              })
-            }
-            onIncrement={() =>
-              patch({
-                putts: (score.putts ?? 0) + 1,
-              })
-            }
-          />
-          <StatStepper
-            label="Penalties"
-            value={score.penalties}
-            onDecrement={() =>
-              patch({ penalties: Math.max(0, score.penalties - 1) })
-            }
-            onIncrement={() => patch({ penalties: score.penalties + 1 })}
+      {par >= 4 ? (
+        <div className="flex justify-center">
+          <DirectionalPicker
+            label="Fairway"
+            compact
+            value={score.fairwayHit}
+            onChange={(fairwayHit) => patch({ fairwayHit })}
           />
         </div>
+      ) : null}
 
-        <label className="flex cursor-pointer items-center justify-center gap-2.5 py-1">
-          <input
-            type="checkbox"
-            checked={score.sandSave === true}
-            onChange={(e) => patch({ sandSave: e.target.checked })}
-            className="h-[18px] w-[18px] rounded border-2 border-sand-hunter accent-sand-hunter"
-          />
-          <span className="text-xs font-bold uppercase tracking-wide text-[#373737]">
-            Sand save
-          </span>
-        </label>
+      <div className="grid min-w-0 grid-cols-2 gap-2">
+        <StatStepper
+          label="Putts"
+          value={score.putts ?? "—"}
+          onDecrement={() =>
+            patch({
+              putts: Math.max(0, (score.putts ?? 2) - 1),
+            })
+          }
+          onIncrement={() =>
+            patch({
+              putts: (score.putts ?? 0) + 1,
+            })
+          }
+        />
+        <StatStepper
+          label="Penalties"
+          value={score.penalties}
+          onDecrement={() =>
+            patch({ penalties: Math.max(0, score.penalties - 1) })
+          }
+          onIncrement={() => patch({ penalties: score.penalties + 1 })}
+        />
       </div>
+
+      <label className="flex cursor-pointer items-center justify-center gap-2.5">
+        <input
+          type="checkbox"
+          checked={score.sandSave === true}
+          onChange={(e) => patch({ sandSave: e.target.checked })}
+          className="h-[18px] w-[18px] rounded border-2 border-sand-hunter accent-sand-hunter"
+        />
+        <span className="text-sm font-medium capitalize text-[#373737]">
+          Sand Save
+        </span>
+      </label>
     </div>
   );
 }

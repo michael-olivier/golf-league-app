@@ -63,7 +63,7 @@ export function HoleScoreStepper({
   return (
     <div>
       {scorecard && navigation ? (
-        <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="mb-6 flex items-center justify-between gap-2">
           <button
             type="button"
             disabled={!navigation.canPrevious}

@@ -1,32 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
-import { Sheet } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { BottomSheet } from "../components/BottomSheet";
 import { DetailedHoleInput } from "../components/ScoreEntry/DetailedHoleInput";
-import { CourseHandicapFooter } from "../components/CourseHandicapFooter";
-import { CourseNameWithFavorite } from "../components/CourseNameWithFavorite";
-import { PageTitleSection } from "../components/PageTitleSection";
-import { ScoreModeToggle } from "../components/ScoreEntry/ScoreModeToggle";
-import { FoursomeMatchSummaries } from "../components/ScoreEntry/FoursomeMatchSummaries";
+import { CourseFavoriteStar } from "../components/CourseFavoriteStar";
 import { LeagueScorecardTable } from "../components/ScoreEntry/LeagueScorecardTable";
-import { ScorecardSummary } from "../components/ScoreEntry/ScorecardSummary";
-import { FoursomePlayerTabs } from "../components/ScoreEntry/FoursomePlayerTabs";
-import { SimpleHoleInput } from "../components/ScoreEntry/SimpleHoleInput";
+import { FoursomeScoringWithTabs } from "../components/ScoreEntry/FoursomePlayerTabs";
+import type { Player } from "../types";
+import { scoringGolferToPlayer } from "../utils/scoringGolfer";
 import {
   emptyDetailedScore,
   isDetailedScore,
   isHolePlayed,
   type DetailedHoleScore,
-  type SimpleHoleScore,
 } from "../types";
 import { useLeague } from "../store/LeagueContext";
 import { useRoundSetup } from "../store/RoundSetupContext";
 import { leagueNineLabel } from "../utils/player";
 import { matchRoundHasStarted } from "../utils/matchScores";
+import {
+  matchOpponentForPlayer,
+  playerGetsStrokeOnHole,
+} from "../utils/matchPlay";
 import { playableHoles } from "../utils/playableHoles";
 
-type EntryScope = "self" | "foursome";
-type ScoreMode = "simple" | "detailed";
+const SCORE_ENTRY_MODE = "detailed" as const;
+
+function casualRoundLabel(setup: {
+  holeCount: 9 | 18;
+  startHole: number;
+}): string {
+  if (setup.holeCount === 18) return "18 holes";
+  return `9 holes · start ${setup.startHole}`;
+}
 
 type ScoresPageProps = {
   variant: "league" | "casual";
@@ -42,10 +48,10 @@ export function ScoresPage({ variant }: ScoresPageProps) {
     getRound,
     ensureRound,
     updateHoleScore,
-    setRoundScoreEntryMode,
     setDesignatedScorer,
   } = useLeague();
-  const { setup } = useRoundSetup();
+  const { setup, setSetup } = useRoundSetup();
+  const navigate = useNavigate();
 
   const isCasual = variant === "casual";
   const leagueMatch = state.matches.find((m) => m.status === "in_progress");
@@ -80,8 +86,6 @@ export function ScoresPage({ variant }: ScoresPageProps) {
   const foursome =
     !isCasual && match ? getFoursomeForUser(match.id) : undefined;
 
-  const [scope, setScope] = useState<EntryScope>("self");
-  const [mode, setMode] = useState<ScoreMode>("simple");
   const [activePlayerId, setActivePlayerId] = useState(currentPlayer.id);
   const [currentHole, setCurrentHole] = useState(0);
   const [scorecardOpen, setScorecardOpen] = useState(false);
@@ -96,27 +100,32 @@ export function ScoresPage({ variant }: ScoresPageProps) {
       .filter((p): p is NonNullable<typeof p> => !!p);
   }, [foursome, getPlayer, currentPlayer]);
 
+  const casualScoringPlayers = useMemo((): Player[] => {
+    if (!isCasual || !setup) return [currentPlayer];
+    if (setup.scoringGolfers?.length) {
+      return setup.scoringGolfers.map((g) => {
+        const player = scoringGolferToPlayer(g);
+        if (player.avatarUrl) return player;
+        const leaguePlayer = getPlayer(g.id);
+        return leaguePlayer?.avatarUrl
+          ? { ...player, avatarUrl: leaguePlayer.avatarUrl }
+          : player;
+      });
+    }
+    return [currentPlayer];
+  }, [isCasual, setup, currentPlayer, getPlayer]);
+
+  const scoringPlayers = isCasual ? casualScoringPlayers : foursomePlayers;
+
   const leagueRoundStarted =
     !isCasual && match ? matchRoundHasStarted(match, state) : false;
 
-  const roundPlayers = useMemo(() => {
-    if (isCasual) {
-      return foursomePlayers.filter((p) => p.id === state.currentUserId);
-    }
-    if (scope === "foursome") return foursomePlayers;
-    return foursomePlayers.filter((p) => p.id === state.currentUserId);
-  }, [isCasual, scope, foursomePlayers, state.currentUserId]);
-
   const canEditActivePlayer = isCasual
     ? true
-    : scope === "self"
-      ? activePlayerId === state.currentUserId
-      : foursome?.designatedScorerId === state.currentUserId;
+    : foursome?.designatedScorerId === state.currentUserId ||
+      !foursome?.designatedScorerId;
 
-  const playersNeedingRounds = useMemo(() => {
-    if (!isCasual && foursomePlayers.length > 1) return foursomePlayers;
-    return roundPlayers;
-  }, [isCasual, foursomePlayers, roundPlayers]);
+  const playersNeedingRounds = scoringPlayers;
 
   useEffect(() => {
     if (!sessionId || !course || !playingHoles.length) return;
@@ -124,31 +133,24 @@ export function ScoresPage({ variant }: ScoresPageProps) {
       ensureRound(
         sessionId,
         p.id,
-        mode,
+        SCORE_ENTRY_MODE,
         playingHoles.map((h) => h.par),
       );
     }
-  }, [sessionId, course, playingHoles, playersNeedingRounds, mode, ensureRound]);
+  }, [sessionId, course, playingHoles, playersNeedingRounds, ensureRound]);
 
   useEffect(() => {
-    const selectable =
-      scope === "foursome" ? foursomePlayers : roundPlayers;
-    if (selectable.length && !selectable.find((p) => p.id === activePlayerId)) {
-      setActivePlayerId(selectable[0].id);
+    if (
+      scoringPlayers.length &&
+      !scoringPlayers.find((p) => p.id === activePlayerId)
+    ) {
+      setActivePlayerId(scoringPlayers[0].id);
     }
-  }, [scope, foursomePlayers, roundPlayers, activePlayerId]);
-
-  useEffect(() => {
-    if (!sessionId) return;
-    const activeRound = getRound(sessionId, activePlayerId);
-    if (activeRound) {
-      setMode(activeRound.scoreEntryMode);
-    }
-  }, [sessionId, activePlayerId, getRound]);
+  }, [scoringPlayers, activePlayerId]);
 
   useEffect(() => {
     if (!missingScoreWarning || !sessionId) return;
-    const complete = foursomePlayers.every((p) =>
+    const complete = scoringPlayers.every((p) =>
       isHolePlayed(getRound(sessionId, p.id)?.scores[currentHole]),
     );
     if (complete) setMissingScoreWarning(null);
@@ -156,7 +158,7 @@ export function ScoresPage({ variant }: ScoresPageProps) {
     missingScoreWarning,
     sessionId,
     currentHole,
-    foursomePlayers,
+    scoringPlayers,
     getRound,
     state.rounds,
   ]);
@@ -183,22 +185,13 @@ export function ScoresPage({ variant }: ScoresPageProps) {
   const round = getRound(sessionId, activePlayerId);
   const holeScore = round?.scores[currentHole];
 
-  const updateScore = (next: SimpleHoleScore | DetailedHoleScore) => {
+  const updateScore = (next: DetailedHoleScore) => {
     updateHoleScore(sessionId, activePlayerId, currentHole, () => {
       const strokes = next.strokes ?? null;
-      if (mode === "simple") {
-        return { strokes };
-      }
       return isDetailedScore(next)
         ? { ...next, strokes }
         : { ...emptyDetailedScore(), strokes };
     });
-  };
-
-  const handleStatsToggle = (statsEnabled: boolean) => {
-    const nextMode: ScoreMode = statsEnabled ? "detailed" : "simple";
-    setMode(nextMode);
-    setRoundScoreEntryMode(sessionId, activePlayerId, nextMode);
   };
 
   const claimScorer = () => {
@@ -214,13 +207,8 @@ export function ScoresPage({ variant }: ScoresPageProps) {
   const goToNextHole = () => {
     if (currentHole >= playingHoles.length - 1) return;
 
-    if (
-      !isCasual &&
-      scope === "foursome" &&
-      canEditActivePlayer &&
-      foursomePlayers.length > 1
-    ) {
-      const missing = foursomePlayers.filter((p) => {
+    if (canEditActivePlayer && scoringPlayers.length > 1) {
+      const missing = scoringPlayers.filter((p) => {
         const score = getRound(sessionId, p.id)?.scores[currentHole];
         return !isHolePlayed(score);
       });
@@ -237,217 +225,262 @@ export function ScoresPage({ variant }: ScoresPageProps) {
     setCurrentHole((h) => Math.min(playingHoles.length - 1, h + 1));
   };
 
-  const selectedTee =
-    isCasual && setup
-      ? (course.tees.find((t) => t.id === setup.teeBoxId) ?? course.tees[0])
-      : (course.tees.find((t) => t.id === state.league.defaultTeeBoxId) ??
-        course.tees[0]);
+  const scoreEntryFields =
+    hole && holeScore ? (
+      <>
+        <fieldset
+          disabled={!canEditActivePlayer}
+          className="w-full disabled:pointer-events-none"
+        >
+          <DetailedHoleInput
+            holeNumber={hole.number}
+            par={hole.par}
+            score={
+              holeScore && isDetailedScore(holeScore)
+                ? holeScore
+                : {
+                    ...emptyDetailedScore(),
+                    strokes: holeScore?.strokes ?? null,
+                  }
+            }
+            onChange={updateScore}
+            navigation={{
+              onPrevious: goToPreviousHole,
+              onNext: goToNextHole,
+              canPrevious: currentHole > 0,
+              canNext: currentHole < playingHoles.length - 1,
+            }}
+          />
+        </fieldset>
+
+        {missingScoreWarning ? (
+          <p className="mt-3 text-xs leading-snug text-sand-brick">
+            {missingScoreWarning}
+          </p>
+        ) : null}
+      </>
+    ) : null;
+
+  const leagueScorerBanner =
+    foursome && foursome.designatedScorerId !== state.currentUserId ? (
+      <div className="mb-3 rounded-[8px] border border-sand-brick/35 bg-sand-brick/10 px-3 py-2 text-xs text-sand-brick">
+        {foursome.designatedScorerId ? (
+          <>
+            <strong>{getPlayer(foursome.designatedScorerId)?.name}</strong> is
+            entering for the group.
+          </>
+        ) : !leagueRoundStarted ? (
+          <>
+            Anyone in the group can enter scores, or{" "}
+            <button
+              type="button"
+              onClick={claimScorer}
+              className="font-semibold underline"
+            >
+              enter for everyone
+            </button>
+            .
+          </>
+        ) : (
+          <>Group scoring is in progress.</>
+        )}
+      </div>
+    ) : null;
+
+  const courseHandicapForPlayer = (playerId: string) =>
+    setup?.golferCourseHandicaps?.[playerId] ?? setup?.courseHandicap ?? 0;
+
+  const scoreEntryBody =
+    scoreEntryFields != null ? (
+      <div className={!canEditActivePlayer ? "opacity-80" : undefined}>
+        {scoreEntryFields}
+      </div>
+    ) : null;
+
+  const leagueHeaderMeta = (
+    <div className="mb-2 flex items-start gap-1">
+      <button
+        type="button"
+        onClick={() => navigate("/league")}
+        aria-label="Back to league"
+        className="-ml-1 shrink-0 p-1 text-white"
+      >
+        <ChevronLeft className="h-6 w-6" strokeWidth={0.5} aria-hidden />
+      </button>
+      <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5 py-0.5 text-left text-white">
+        {match?.weekNumber != null ? (
+          <p className="text-xs font-light uppercase tracking-wide">
+            Week {match.weekNumber}
+          </p>
+        ) : null}
+        <p className="text-lg font-semibold capitalize leading-snug">
+          {course.name}
+        </p>
+        {match?.gameType ? (
+          <p className="text-sm font-normal capitalize">
+            Game: {match.gameType}
+          </p>
+        ) : null}
+      </div>
+      <CourseFavoriteStar
+        courseId={course.id}
+        courseName={course.name}
+        className="text-white/90 hover:text-white [&_svg:not([class*='fill-'])]:stroke-white"
+      />
+    </div>
+  );
+
+  const leagueFooterActions = (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={() => setScorecardOpen(true)}
+        className="flex-1 rounded-[8px] bg-sand-hunter py-3 text-xs font-bold tracking-wide text-white transition active:scale-[0.99]"
+      >
+        View Scorecard
+      </button>
+      <button
+        type="button"
+        onClick={() => navigate("/league")}
+        className="flex-1 rounded-[8px] border border-sand-brick py-3 text-xs font-bold tracking-wide text-sand-brick transition active:scale-[0.99]"
+      >
+        Quit Round
+      </button>
+    </div>
+  );
+
+  const scorecardNineLabel = isCasual
+    ? setup
+      ? casualRoundLabel(setup)
+      : ""
+    : leagueNineLabel(state.league.nineSide);
+
+  const scorecardSheet = (
+    <BottomSheet
+      open={scorecardOpen}
+      onClose={() => setScorecardOpen(false)}
+      title="Scorecard"
+      tone="white"
+      expanded
+      contentClassName="pb-[max(24px,env(safe-area-inset-bottom))]"
+    >
+      <LeagueScorecardTable
+        courseName={course.name}
+        nineLabel={scorecardNineLabel}
+        holes={playingHoles}
+        players={scoringPlayers}
+        scoresForPlayer={(id) => getRound(sessionId, id)?.scores}
+        casualStrokeNet={
+          isCasual && setup?.scoringMode === "stroke"
+            ? {
+                holeCount: setup.holeCount,
+                courseHandicapForPlayer: courseHandicapForPlayer,
+              }
+            : undefined
+        }
+        casualMatchNet={
+          isCasual &&
+          setup?.scoringMode === "match_net" &&
+          scoringPlayers.length >= 2
+        }
+      />
+    </BottomSheet>
+  );
+
+  const activePlayingHole = playingHoles[currentHole];
+
+  const matchNetStrokePop = (playerId: string): boolean => {
+    if (!isCasual || !setup || setup.scoringMode !== "match_net") {
+      return false;
+    }
+    if (!activePlayingHole) return false;
+    const player = scoringPlayers.find((p) => p.id === playerId);
+    const opponent = matchOpponentForPlayer(playerId, scoringPlayers);
+    if (!player || !opponent) return false;
+    return playerGetsStrokeOnHole(player, opponent, activePlayingHole);
+  };
+
+  const casualHeaderMeta = setup ? (
+    <div className="mb-1 flex w-full items-start justify-between gap-2">
+      <div className="flex min-w-0 flex-1 items-start gap-0">
+        <button
+          type="button"
+          onClick={() => navigate(`/scores?courseId=${course.id}`)}
+          aria-label="Back to round setup"
+          className="shrink-0 p-1 pl-0 text-sand-hunter"
+        >
+          <ChevronLeft className="h-6 w-6" strokeWidth={0.5} aria-hidden />
+        </button>
+        <p className="min-w-0 flex-1 pt-0.5 text-left text-lg font-semibold capitalize leading-snug text-[#373737]">
+          {course.name}
+        </p>
+      </div>
+      <CourseFavoriteStar
+        courseId={course.id}
+        courseName={course.name}
+        className="mt-0.5 shrink-0"
+      />
+    </div>
+  ) : null;
+
+  const casualFooterActions = (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={() => setScorecardOpen(true)}
+        className="flex-1 rounded-[8px] bg-sand-hunter py-3 text-xs font-bold tracking-wide text-white transition active:scale-[0.99]"
+      >
+        View Scorecard
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setSetup(null);
+          navigate("/scores");
+        }}
+        className="flex-1 rounded-[8px] border border-sand-brick py-3 text-xs font-bold tracking-wide text-sand-brick transition active:scale-[0.99]"
+      >
+        Quit Round
+      </button>
+    </div>
+  );
+
+  const immersiveHeader = isCasual ? casualHeaderMeta : leagueHeaderMeta;
+  const immersiveFooter = isCasual ? casualFooterActions : leagueFooterActions;
+  const headerBandClassName = isCasual
+    ? "bg-sand-score-mist -mt-2 pb-0 pt-0"
+    : "bg-sand-sage";
+  const tabVariant = isCasual ? "onScoreMist" : "onSage";
+  const casualPaddingX = "px-4";
+
+  const scrollContent = (
+    <>
+      {!isCasual ? leagueScorerBanner : null}
+      {scoreEntryBody}
+    </>
+  );
 
   return (
-    <div className="flex min-h-0 min-w-0 max-w-full flex-1 flex-col space-y-4 pb-4">
-      <PageTitleSection title="Score">
-        <CourseNameWithFavorite courseId={course.id} courseName={course.name}>
-          {isCasual && setup ? (
-            <CourseHandicapFooter
-              courseHandicap={setup.courseHandicap}
-              inline
-            />
-          ) : (
-            <div className="mt-1 space-y-0.5 text-sm text-fairway-500">
-              <p>
-                Week {match?.weekNumber} ·{" "}
-                {leagueNineLabel(state.league.nineSide)}
-              </p>
-            </div>
-          )}
-        </CourseNameWithFavorite>
-      </PageTitleSection>
-      {isCasual && setup ? (
-        <div className="rounded-[8px] border border-sand-hunter bg-white px-4 py-2.5 text-center text-sm font-medium capitalize text-sand-hunter">
-          {setup.scoreType} · {setup.holeCount} holes
-          {selectedTee ? ` · ${selectedTee.name} tees` : ""}
-        </div>
-      ) : null}
-
-      {!isCasual && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setScope("self");
-              setActivePlayerId(state.currentUserId);
-            }}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
-              scope === "self"
-                ? "bg-sand-hunter text-white"
-                : "border border-sand-hunter bg-transparent text-sand-hunter"
-            }`}
-          >
-            Individual
-          </button>
-          <button
-            type="button"
-            onClick={() => setScope("foursome")}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
-              scope === "foursome"
-                ? "bg-sand-hunter text-white"
-                : "border border-sand-hunter bg-transparent text-sand-hunter"
-            }`}
-          >
-            Foursome
-          </button>
-        </div>
-      )}
-
-      {!isCasual &&
-      scope === "foursome" &&
-      foursome &&
-      foursome.designatedScorerId !== state.currentUserId ? (
-        <div className="rounded-[8px] border border-sand-brick/35 bg-sand-brick/10 px-3 py-2 text-xs text-sand-brick">
-          {foursome.designatedScorerId ? (
-            <>
-              <strong>
-                {getPlayer(foursome.designatedScorerId)?.name}
-              </strong>{" "}
-              is entering for the group.
-            </>
-          ) : !leagueRoundStarted ? (
-            <>
-              Anyone in the group can enter scores, or{" "}
-              <button
-                type="button"
-                onClick={claimScorer}
-                className="font-semibold underline"
-              >
-                enter for everyone
-              </button>
-              .
-            </>
-          ) : (
-            <>Group scoring is in progress.</>
-          )}
-        </div>
-      ) : null}
-
-      {!isCasual && scope === "foursome" && foursomePlayers.length > 1 && (
-        <FoursomePlayerTabs
-          players={foursomePlayers}
-          activePlayerId={activePlayerId}
-          onSelect={setActivePlayerId}
-        />
-      )}
-
-      {hole && holeScore && (
-        <div
-          className={`min-w-0 space-y-3 rounded-[8px] border border-sand-hunter bg-white p-4 ${
-            !canEditActivePlayer ? "opacity-80" : ""
-          }`}
-        >
-          <fieldset
-            disabled={!canEditActivePlayer}
-            className="space-y-3 disabled:pointer-events-none"
-          >
-            {mode === "simple" ? (
-              <SimpleHoleInput
-                holeNumber={hole.number}
-                par={hole.par}
-                score={{ strokes: holeScore?.strokes ?? null }}
-                onChange={updateScore}
-                navigation={{
-                  onPrevious: goToPreviousHole,
-                  onNext: goToNextHole,
-                  canPrevious: currentHole > 0,
-                  canNext: currentHole < playingHoles.length - 1,
-                }}
-              />
-            ) : (
-              <DetailedHoleInput
-                holeNumber={hole.number}
-                par={hole.par}
-                score={
-                  holeScore && isDetailedScore(holeScore)
-                    ? holeScore
-                    : {
-                        ...emptyDetailedScore(),
-                        strokes: holeScore?.strokes ?? null,
-                      }
-                }
-                onChange={updateScore}
-                navigation={{
-                  onPrevious: goToPreviousHole,
-                  onNext: goToNextHole,
-                  canPrevious: currentHole > 0,
-                  canNext: currentHole < playingHoles.length - 1,
-                }}
-              />
-            )}
-          </fieldset>
-
-          {missingScoreWarning ? (
-            <p className="text-xs leading-snug text-sand-brick">
-              {missingScoreWarning}
-            </p>
-          ) : null}
-
-          <div className="border-t border-fairway-800/25 pt-2">
-            <ScoreModeToggle
-              statsEnabled={mode === "detailed"}
-              onChange={handleStatsToggle}
-              disabled={!canEditActivePlayer}
-            />
-          </div>
-        </div>
-      )}
-
-      {!isCasual && foursomePlayers.length > 1 ? (
-        <FoursomeMatchSummaries
-          players={foursomePlayers}
-          holes={playingHoles}
-          scoresForPlayer={(id) => getRound(sessionId, id)?.scores}
-        />
-      ) : (
-        roundPlayers.map((p) => {
-          const r = getRound(sessionId, p.id);
-          if (!r) return null;
-          return (
-            <ScorecardSummary
-              key={p.id}
-              playerName={p.name}
-              holes={playingHoles}
-              scores={r.scores}
-            />
-          );
-        })
-      )}
-
-      {!isCasual && (
-        <>
-          <button
-            type="button"
-            onClick={() => setScorecardOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-sand-hunter bg-transparent py-3 text-xs font-bold tracking-wide text-sand-hunter transition hover:bg-fairway-950/5 active:bg-fairway-950/10"
-          >
-            <Sheet className="h-5 w-5 shrink-0" strokeWidth={0.5} aria-hidden />
-            VIEW SCORECARD
-          </button>
-          <BottomSheet
-            open={scorecardOpen}
-            onClose={() => setScorecardOpen(false)}
-            title="Scorecard"
-            tone="white"
-            contentClassName="pb-[max(24px,env(safe-area-inset-bottom))]"
-          >
-            <LeagueScorecardTable
-              courseName={course.name}
-              nineLabel={leagueNineLabel(state.league.nineSide)}
-              holes={playingHoles}
-              players={foursomePlayers}
-              scoresForPlayer={(id) => getRound(sessionId, id)?.scores}
-            />
-          </BottomSheet>
-        </>
-      )}
-
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <FoursomeScoringWithTabs
+        layout="league"
+        headerBandClassName={headerBandClassName}
+        tabVariant={tabVariant}
+        players={scoringPlayers}
+        activePlayerId={activePlayerId}
+        onSelect={setActivePlayerId}
+        leagueHeader={immersiveHeader}
+        footer={immersiveFooter}
+        strokePopForPlayer={
+          isCasual && setup?.scoringMode === "match_net"
+            ? matchNetStrokePop
+            : undefined
+        }
+        contentPaddingX={isCasual ? casualPaddingX : "px-8"}
+      >
+        {scrollContent}
+      </FoursomeScoringWithTabs>
+      {scorecardSheet}
     </div>
   );
 }

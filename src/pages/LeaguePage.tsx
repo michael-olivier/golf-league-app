@@ -37,7 +37,7 @@ export function LeaguePage() {
         ) : null}
       </PageTitleSection>
 
-      <MakeupUrgentBanner surface="light" />
+      <MakeupUrgentBanner surface="hunter" />
 
       <LeagueWeekSection />
 

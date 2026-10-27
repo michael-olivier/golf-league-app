@@ -1,84 +1,69 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useIsMobileNative } from "../hooks/useShowDeviceFrame";
 import {
-  NavHomeIcon,
-  NavLeagueIcon,
-  NavRulesIcon,
-  NavScoreIcon,
-  NavSettingsIcon,
-} from "./nav/NavIcons";
-
-const navItems = [
-  { to: "/", label: "Home", Icon: NavHomeIcon },
-  { to: "/league", label: "League", Icon: NavLeagueIcon },
-  { to: "/scores", label: "Score", Icon: NavScoreIcon },
-  { to: "/rules", label: "Rules", Icon: NavRulesIcon },
-  { to: "/settings", label: "Settings", Icon: NavSettingsIcon },
-] as const;
-
-function isNavItemActive(pathname: string, to: string): boolean {
-  if (to === "/") {
-    return pathname === "/";
-  }
-  if (to === "/scores") {
-    if (pathname === "/scores/league") return false;
-    return (
-      pathname === "/scores" ||
-      pathname.startsWith("/scores/setup") ||
-      pathname.startsWith("/scores/entry")
-    );
-  }
-  if (to === "/league") {
-    return (
-      pathname === "/league" ||
-      pathname.startsWith("/league/") ||
-      pathname === "/scores/league"
-    );
-  }
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
+  isImmersiveScorePath,
+  pageBackgroundClass,
+} from "../utils/pageBackground";
+import { MobileAppNav } from "./nav/MobileAppNav";
+import {
+  hideBottomNavForPath,
+  isNavItemActive,
+  navItems,
+  navMenuUsesLightIcon,
+} from "./nav/navConfig";
 
 export function Layout() {
   const { pathname } = useLocation();
-  const isHome = pathname === "/";
+  const isMobileNative = useIsMobileNative();
+  const pageBg = pageBackgroundClass(pathname);
+  const immersiveScorePage = isImmersiveScorePath(pathname);
+  const scoreSetupPage =
+    pathname === "/scores" || pathname.startsWith("/scores/setup");
+  const hideBottomNav = hideBottomNavForPath(pathname);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {isMobileNative ? (
+        <MobileAppNav
+          pathname={pathname}
+          useLightIcon={navMenuUsesLightIcon(pathname)}
+        />
+      ) : null}
+
       <main
-        className={`flex min-h-0 flex-1 flex-col overflow-hidden pb-0 ${
-          isHome ? "bg-sand-hunter px-0" : "bg-transparent px-4"
-        }`}
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden px-0 pb-0 ${pageBg}`}
       >
         <div
-          className={`page-scroll flex min-w-0 flex-col ${
-            isHome ? "min-h-full bg-sand-hunter px-4" : ""
-          }`}
+          className={`page-scroll flex min-h-0 min-w-0 flex-1 flex-col ${immersiveScorePage ? "overflow-hidden px-0 !pb-0" : scoreSetupPage ? "overflow-hidden px-4 !pb-0" : "px-4"} ${pageBg}`}
         >
           <Outlet />
         </div>
       </main>
 
-      <nav className="z-20 shrink-0 border-t border-sand-hunter bg-fairway-900/95 backdrop-blur">
-        <div className="flex justify-around px-3 pt-2 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={() => {
-                const active = isNavItemActive(pathname, item.to);
-                return `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-medium transition ${
-                  active
-                    ? "bg-fairway-100 text-fairway-200"
-                    : "text-fairway-400 hover:text-fairway-200"
-                }`;
-              }}
-            >
-              <item.Icon />
-              {item.label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      {!isMobileNative && !hideBottomNav ? (
+        <nav className="z-20 shrink-0 border-t border-sand-hunter bg-fairway-900/95 backdrop-blur">
+          <div className="flex justify-around px-3 pt-2 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={() => {
+                  const active = isNavItemActive(pathname, item.to);
+                  return `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-medium transition ${
+                    active
+                      ? "bg-fairway-100 text-fairway-200"
+                      : "text-fairway-400 hover:text-fairway-200"
+                  }`;
+                }}
+              >
+                <item.Icon />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      ) : null}
     </div>
   );
 }

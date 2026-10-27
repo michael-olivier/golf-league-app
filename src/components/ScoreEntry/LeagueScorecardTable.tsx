@@ -2,6 +2,16 @@ import type { Hole, HoleScore, Player } from "../../types";
 import { isHolePlayed } from "../../types";
 import { playerTabLabels } from "../../utils/player";
 import { totalStrokes } from "../../store/LeagueContext";
+import {
+  courseStrokesOnHole,
+  grossAndNetTotals,
+} from "../../utils/casualScoring";
+import {
+  matchOpponentForPlayer,
+  playerGetsStrokeOnHole,
+} from "../../utils/matchPlay";
+import { DecoratedScore } from "./DecoratedScore";
+import { StrokePopMarker } from "./StrokePopMarker";
 
 interface LeagueScorecardTableProps {
   courseName: string;
@@ -9,11 +19,61 @@ interface LeagueScorecardTableProps {
   holes: Hole[];
   players: Player[];
   scoresForPlayer: (playerId: string) => HoleScore[] | undefined;
+  casualStrokeNet?: {
+    holeCount: 9 | 18;
+    courseHandicapForPlayer: (playerId: string) => number;
+  };
+  /** Match (Net): pops vs paired opponent + decorated gross scores. */
+  casualMatchNet?: boolean;
 }
 
 function strokeCell(score: HoleScore | undefined): string {
   if (!score || !isHolePlayed(score)) return "—";
   return String(score.strokes);
+}
+
+function strokeCellNet(
+  score: HoleScore | undefined,
+  hole: Hole,
+  courseHandicap: number,
+  holeCount: 9 | 18,
+): string {
+  if (!score || !isHolePlayed(score)) return "—";
+  const pop = courseStrokesOnHole(
+    courseHandicap,
+    hole.handicapIndex,
+    holeCount,
+  );
+  const net = score.strokes! - pop;
+  return pop > 0 ? `${score.strokes}→${net}` : String(score.strokes);
+}
+
+function MatchNetScoreCell({
+  score,
+  hole,
+  player,
+  players,
+}: {
+  score: HoleScore | undefined;
+  hole: Hole;
+  player: Player;
+  players: Player[];
+}) {
+  const opponent = matchOpponentForPlayer(player.id, players);
+  const showPop =
+    opponent != null &&
+    playerGetsStrokeOnHole(player, opponent, hole);
+
+  return (
+    <div className="inline-flex items-center justify-center gap-0.5">
+      {showPop ? <StrokePopMarker /> : null}
+      <DecoratedScore
+        size="sm"
+        strokes={score && isHolePlayed(score) ? score.strokes : null}
+        par={hole.par}
+      />
+    </div>
+  );
 }
 
 export function LeagueScorecardTable({
@@ -22,6 +82,8 @@ export function LeagueScorecardTable({
   holes,
   players,
   scoresForPlayer,
+  casualStrokeNet,
+  casualMatchNet = false,
 }: LeagueScorecardTableProps) {
   const labels = playerTabLabels(players);
   const showWomenPar = holes.some(
@@ -99,6 +161,16 @@ export function LeagueScorecardTable({
             {players.map((player) => {
               const scores = scoresForPlayer(player.id) ?? [];
               const label = labels.get(player.id) ?? player.name;
+              const ch = casualStrokeNet?.courseHandicapForPlayer(player.id);
+              const totals =
+                casualStrokeNet && ch != null
+                  ? grossAndNetTotals(
+                      scores,
+                      holes,
+                      ch,
+                      casualStrokeNet.holeCount,
+                    )
+                  : null;
               return (
                 <tr
                   key={player.id}
@@ -108,12 +180,30 @@ export function LeagueScorecardTable({
                     {label}
                   </td>
                   {holes.map((h, idx) => (
-                    <td key={h.number} className="px-0.5 py-2 font-medium">
-                      {strokeCell(scores[idx])}
+                    <td key={h.number} className="px-0.5 py-1.5 font-medium">
+                      {casualMatchNet ? (
+                        <MatchNetScoreCell
+                          score={scores[idx]}
+                          hole={h}
+                          player={player}
+                          players={players}
+                        />
+                      ) : casualStrokeNet && ch != null ? (
+                        strokeCellNet(
+                          scores[idx],
+                          h,
+                          ch,
+                          casualStrokeNet.holeCount,
+                        )
+                      ) : (
+                        strokeCell(scores[idx])
+                      )}
                     </td>
                   ))}
                   <td className="px-1 py-2 font-semibold">
-                    {totalStrokes(scores) ?? "—"}
+                    {totals?.gross != null && totals.net != null
+                      ? `${totals.gross} (${totals.net})`
+                      : (totalStrokes(scores) ?? "—")}
                   </td>
                 </tr>
               );

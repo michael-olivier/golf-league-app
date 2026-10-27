@@ -21,7 +21,7 @@ export function ScorecardSummary({
   const backPar = pars.slice(9, 18);
 
   return (
-    <div className="rounded-[8px] border border-sand-hunter bg-white p-4">
+    <div className="rounded-[8px] bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <span className="font-medium text-[#373737]">
           {playerName}
