@@ -1,4 +1,20 @@
-import type { Player, Team, WeeklyMatch } from "../types";
+import type {
+  Course,
+  League,
+  LeagueState,
+  Player,
+  Team,
+  WeeklyMatch,
+} from "../types";
+import { isTeamBestBallGame } from "./bestBall";
+import {
+  computeBestBallMatchPoints,
+  computeLeagueMatchPoints,
+  formatLeaguePointsTotal,
+  viewerLeagueOutcome,
+  viewerLeaguePointsDisplay,
+} from "./leaguePoints";
+import { leagueHolesForRound } from "./matchScorecard";
 
 export function upcomingMatchForPlayer(
   player: Player,
@@ -46,26 +62,108 @@ export function opponentTeamIdForMatch(
   return undefined;
 }
 
-/** e.g. "Aces won 5-4" from a viewer-relative `resultLabel` like "Won 5–4". */
+function parseLegacyResultLabel(resultLabel: string): {
+  userWon: boolean;
+  ours: number;
+  theirs: number;
+} | null {
+  const parsed = resultLabel.match(/^(Won|Lost|Tied)\s+([\d½.]+)\s*[–-]\s*([\d½.]+)$/i);
+  if (!parsed) return null;
+  const parsePt = (s: string) => {
+    const t = s.trim();
+    if (t === "½") return 0.5;
+    if (t.endsWith("½")) {
+      const whole = t.slice(0, -1);
+      const n = whole === "" ? 0 : Number(whole);
+      return Number.isFinite(n) ? n + 0.5 : NaN;
+    }
+    const n = Number(t);
+    return Number.isFinite(n) ? n : NaN;
+  };
+  return {
+    userWon: parsed[1].toLowerCase() === "won",
+    ours: parsePt(parsed[2]),
+    theirs: parsePt(parsed[3]),
+  };
+}
+
+export function leagueMatchPointsResult(
+  match: WeeklyMatch,
+  players: Player[],
+  course: Course | undefined,
+  league: League,
+  rounds: LeagueState["rounds"],
+) {
+  if (!course || match.status !== "completed") return null;
+  const holes = leagueHolesForRound(course.holes, league);
+  if (isTeamBestBallGame(match.gameType)) {
+    return computeBestBallMatchPoints(match, holes, rounds);
+  }
+  return computeLeagueMatchPoints(match, players, holes, course, league, rounds);
+}
+
+/** Points string for the viewer's team, e.g. `2–1`. */
+export function matchPointsForViewer(
+  match: WeeklyMatch,
+  viewerTeamId: string,
+  computed?: ReturnType<typeof computeLeagueMatchPoints> | null,
+): string | null {
+  if (computed) {
+    return viewerLeaguePointsDisplay(computed, viewerTeamId);
+  }
+
+  const legacy = match.resultLabel
+    ? parseLegacyResultLabel(match.resultLabel)
+    : null;
+  if (legacy) {
+    return formatLeaguePointsTotal(legacy.ours, legacy.theirs);
+  }
+
+  return null;
+}
+
+export function matchOutcomeForViewer(
+  match: WeeklyMatch,
+  viewerTeamId: string,
+  computed?: ReturnType<typeof computeLeagueMatchPoints> | null,
+): "won" | "lost" | "tied" | null {
+  if (computed) {
+    return viewerLeagueOutcome(computed, viewerTeamId);
+  }
+
+  const legacy = match.resultLabel?.match(/^(Won|Lost|Tied)\s+/i);
+  if (!legacy) return null;
+  const key = legacy[1].toLowerCase();
+  if (key === "won") return "won";
+  if (key === "lost") return "lost";
+  return "tied";
+}
+
+/** e.g. "Aces won 2–1" from viewer-relative data. */
 export function matchResultSummaryLine(
   match: WeeklyMatch,
   viewerTeamId: string,
   getTeam: (id: string) => Team | undefined,
+  computed?: ReturnType<typeof computeLeagueMatchPoints> | null,
 ): string | null {
-  if (!match.resultLabel) return null;
+  const points = matchPointsForViewer(match, viewerTeamId, computed);
+  if (!points) return match.resultLabel ?? null;
 
-  const parsed = match.resultLabel.match(/^(Won|Lost)\s+(\d+)\s*[–-]\s*(\d+)$/i);
-  if (!parsed) return match.resultLabel;
+  const outcome = matchOutcomeForViewer(match, viewerTeamId, computed);
+  if (!outcome) return points;
 
-  const userWon = parsed[1].toLowerCase() === "won";
-  const ours = Number(parsed[2]);
-  const theirs = Number(parsed[3]);
-  const winnerTeamId = userWon
-    ? viewerTeamId
-    : opponentTeamIdForMatch(match, viewerTeamId);
+  const winnerTeamId =
+    outcome === "won"
+      ? viewerTeamId
+      : outcome === "lost"
+        ? opponentTeamIdForMatch(match, viewerTeamId)
+        : undefined;
+
+  if (outcome === "tied") {
+    return `Tied ${points}`;
+  }
+
   const winner = winnerTeamId ? getTeam(winnerTeamId) : undefined;
-  const winScore = userWon ? `${ours}-${theirs}` : `${theirs}-${ours}`;
-
-  if (!winner) return winScore;
-  return `${winner.name} won ${winScore}`;
+  if (!winner) return points;
+  return `${winner.name} won ${points}`;
 }

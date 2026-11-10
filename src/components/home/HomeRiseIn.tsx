@@ -32,15 +32,13 @@ export function HomeRiseIn({
   );
 }
 
-/** Stagger indices for home cards (makeup → profile → recent → league). */
+/** Stagger indices for home stacks (recent → league). */
 export function homeCardRiseIndices(options: {
-  hasMakeup: boolean;
   hasRecent: boolean;
-}): { makeup: number; profile: number; recent: number; league: number } {
+  hasLeague: boolean;
+}): { recent: number; league: number } {
   let i = 0;
-  const makeup = options.hasMakeup ? i++ : -1;
-  const profile = i++;
   const recent = options.hasRecent ? i++ : -1;
-  const league = i++;
-  return { makeup, profile, recent, league };
+  const league = options.hasLeague ? i++ : -1;
+  return { recent, league };
 }

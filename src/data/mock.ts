@@ -131,16 +131,90 @@ export const players: Player[] = (["A", "B"] as const).flatMap((leagueLevel) =>
         name,
         avatarUrl: playerPortraitPath(leagueLevel, teamIndex, playerIndex),
         ghinNumber: `${leagueLevel === "A" ? "1" : "2"}${String(teamIndex + 1).padStart(2, "0")}${playerIndex + 1}00${teamIndex + playerIndex + 7}`,
-        handicapIndex: mockHandicapIndex(leagueLevel, teamIndex, playerIndex),
+        handicapIndex:
+          id === "player-a-05-1"
+            ? 11
+            : id === "player-a-01-1"
+              ? 4.1
+              : mockHandicapIndex(leagueLevel, teamIndex, playerIndex),
         teamId: teamId(leagueLevel, teamIndex),
         ...(id === "player-a-01-1"
           ? {
+              lowHandicapIndex: 3.2,
+              lowHandicapIndexAsOf: "2026-10-21",
               recentRound: {
                 courseId: "course-oakmont",
                 playedOn: "2026-05-24",
                 holeCount: 9,
                 strokes: 42,
+                adjustedGrossScore: 42,
+                scoreDifferential: 2.1,
+                scorePostingSide: "home",
+                teeBoxId: "oakmont-white",
+                nineSide: "back",
+                holeScores: [5, 5, 5, 4, 5, 5, 4, 5, 4],
+                distribution: {
+                  birdiesOrBetter: 0,
+                  pars: 5,
+                  bogeys: 2,
+                  doubleBogeys: 2,
+                  tripleOrWorse: 0,
+                },
+                advancedStats: {
+                  fairwaysHit: 4,
+                  fairwaysPossible: 9,
+                  greensHit: 3,
+                  greensPossible: 9,
+                  putts: 20,
+                },
               },
+              recentRounds: [
+                {
+                  courseId: "course-oakmont",
+                  playedOn: "2026-05-24",
+                  holeCount: 9,
+                  strokes: 42,
+                  adjustedGrossScore: 42,
+                  scoreDifferential: 2.1,
+                  scorePostingSide: "home",
+                  teeBoxId: "oakmont-white",
+                  nineSide: "back",
+                  holeScores: [5, 5, 5, 4, 5, 5, 4, 5, 4],
+                  distribution: {
+                    birdiesOrBetter: 0,
+                    pars: 5,
+                    bogeys: 2,
+                    doubleBogeys: 2,
+                    tripleOrWorse: 0,
+                  },
+                  advancedStats: {
+                    fairwaysHit: 4,
+                    fairwaysPossible: 9,
+                    greensHit: 3,
+                    greensPossible: 9,
+                    putts: 20,
+                  },
+                },
+                {
+                  courseId: "course-oakmont",
+                  playedOn: "2026-05-10",
+                  holeCount: 9,
+                  strokes: 38,
+                  scoreDifferential: 1.4,
+                  teeBoxId: "oakmont-blue",
+                  nineSide: "front",
+                  holeScores: [4, 5, 4, 3, 4, 4, 3, 5, 4],
+                },
+                {
+                  courseId: "course-pinehurst",
+                  playedOn: "2026-04-26",
+                  holeCount: 9,
+                  strokes: 40,
+                  scoreDifferential: 3.2,
+                  nineSide: "front",
+                  holeScores: [5, 4, 4, 4, 5, 4, 4, 5, 5],
+                },
+              ],
               recentScoreToParTrend: [8, 7, 6, 5, 6],
             }
           : {}),
@@ -174,7 +248,10 @@ export const courses: Course[] = [
   {
     id: "course-oakmont",
     name: "Oakmont Valley Golf Club",
+    city: "Santa Rosa",
+    state: "CA",
     logoUrl: "/logos/oakmont-valley.svg",
+    heroImageUrl: "/courses/oakmont-hero.gif",
     holes: oakmontHoles,
     tees: [
       {
@@ -225,8 +302,22 @@ export const courses: Course[] = [
 
 export const matches: WeeklyMatch[] = [
   {
-    id: "match-week-1",
+    id: "match-week-0",
     weekNumber: 1,
+    date: "2026-05-03",
+    courseId: "course-oakmont",
+    gameType: "Match play",
+    status: "completed",
+    teamPairing: {
+      homeTeamId: "team-a-02",
+      awayTeamId: "team-a-01",
+    },
+    foursomes: [],
+    resultLabel: "Lost 1–2",
+  },
+  {
+    id: "match-week-1",
+    weekNumber: 3,
     date: "2026-05-17",
     courseId: "course-oakmont",
     gameType: "Stroke play",
@@ -248,7 +339,33 @@ export const matches: WeeklyMatch[] = [
         designatedScorerId: "player-a-01-1",
       },
     ],
-    resultLabel: "Won 5–4",
+    resultLabel: "Won 2–1",
+  },
+  {
+    id: "match-week-2-aces",
+    weekNumber: 2,
+    date: "2026-05-10",
+    courseId: "course-oakmont",
+    gameType: "Best ball",
+    status: "completed",
+    teamPairing: {
+      homeTeamId: "team-a-01",
+      awayTeamId: "team-a-03",
+    },
+    foursomes: [
+      {
+        id: "foursome-week-2-aces",
+        matchId: "match-week-2-aces",
+        playerIds: [
+          "player-a-01-1",
+          "player-a-01-2",
+          "player-a-03-1",
+          "player-a-03-2",
+        ],
+        designatedScorerId: "player-a-01-1",
+      },
+    ],
+    resultLabel: "Won 3–0",
   },
   {
     id: "match-week-2",
@@ -265,7 +382,7 @@ export const matches: WeeklyMatch[] = [
   },
   {
     id: "match-week-3",
-    weekNumber: 3,
+    weekNumber: 6,
     date: "2026-05-31",
     courseId: "course-oakmont",
     status: "postponed",
@@ -361,6 +478,19 @@ const week1Rounds = Object.fromEntries(
   ]),
 );
 
+/** Team best ball: one entered card per team (designated scorers). */
+const week2BestBallTeamLines: Record<string, number[]> = {
+  "player-a-01-1": [4, 5, 4, 3, 4, 4, 3, 5, 4],
+  "player-a-03-1": [5, 5, 5, 4, 5, 5, 4, 5, 5],
+};
+
+const week2Rounds = Object.fromEntries(
+  Object.entries(week2BestBallTeamLines).map(([playerId, strokes]) => [
+    roundKey("match-week-2-aces", playerId),
+    buildSimpleRound(playerId, strokes),
+  ]),
+);
+
 export const initialLeagueState: LeagueState = {
   league,
   currentUserId: "player-a-01-1",
@@ -370,5 +500,5 @@ export const initialLeagueState: LeagueState = {
   courses,
   matches,
   makeupRequests,
-  rounds: week1Rounds,
+  rounds: { ...week1Rounds, ...week2Rounds },
 };

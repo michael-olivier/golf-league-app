@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -21,6 +21,7 @@ import { ScoreCourseSelectPage } from "./pages/ScoreCourseSelectPage";
 import { ScoreSetupPage } from "./pages/ScoreSetupPage";
 import { ScoresPage } from "./pages/ScoresPage";
 import { SplashPage } from "./pages/SplashPage";
+import { WelcomeInterstitial } from "./pages/WelcomeInterstitial";
 import { LeagueProvider, useLeague } from "./store/LeagueContext";
 import { RoundSetupProvider } from "./store/RoundSetupContext";
 import { LocationPreferencesProvider } from "./store/LocationPreferencesContext";
@@ -45,15 +46,21 @@ const routerBasename =
     ? undefined
     : import.meta.env.BASE_URL.replace(/\/$/, "");
 
+type BootPhase = "splash" | "welcome" | "app";
+
 function AppRoutes() {
-  const [splashDone, setSplashDone] = useState(false);
-  const finishSplash = useCallback(() => setSplashDone(true), []);
+  const [bootPhase, setBootPhase] = useState<BootPhase>("splash");
 
   return (
     <IphoneFrame>
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-        {!splashDone && <SplashPage onComplete={finishSplash} />}
-        {splashDone && (
+        {bootPhase === "splash" ? (
+          <SplashPage onComplete={() => setBootPhase("welcome")} />
+        ) : null}
+        {bootPhase === "welcome" ? (
+          <WelcomeInterstitial onComplete={() => setBootPhase("app")} />
+        ) : null}
+        {bootPhase === "app" ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <BrowserRouter basename={routerBasename}>
               <Routes>
@@ -83,7 +90,7 @@ function AppRoutes() {
               </Routes>
             </BrowserRouter>
           </div>
-        )}
+        ) : null}
       </div>
     </IphoneFrame>
   );

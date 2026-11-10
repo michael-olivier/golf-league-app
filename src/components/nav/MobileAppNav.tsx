@@ -26,12 +26,12 @@ export function MobileAppNav({ pathname, useLightIcon }: MobileAppNavProps) {
         <button
           type="button"
           aria-label="Close menu"
-          className="fixed inset-0 z-30"
+          className="absolute inset-0 z-30"
           onClick={() => setOpen(false)}
         />
       ) : null}
 
-      <div className="fixed z-40" style={anchorStyle}>
+      <div className="absolute z-40" style={anchorStyle}>
         <button
           type="button"
           onClick={() => setOpen((wasOpen) => !wasOpen)}
@@ -40,7 +40,7 @@ export function MobileAppNav({ pathname, useLightIcon }: MobileAppNavProps) {
           aria-haspopup="menu"
           className={`flex h-14 w-14 items-center justify-center rounded-[8px] transition active:opacity-80 ${
             useLightIcon
-              ? "text-white hover:bg-white/10"
+              ? "text-white drop-shadow-[0_1px_3px_rgb(0_0_0_/0.5)] hover:bg-white/10"
               : "text-sand-hunter hover:bg-fairway-950/5"
           }`}
         >

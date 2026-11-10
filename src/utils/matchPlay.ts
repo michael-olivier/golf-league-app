@@ -174,3 +174,20 @@ export function computeHeadToHeadMatch(
 export function formatPlayerTotal(total: number, toParFormatted: string): string {
   return `${total} (${toParFormatted})`;
 }
+
+/** Hole numbers (course) where `receiver` gets a stroke vs `opponent` on this set of holes. */
+export function popHoleNumbersForMatch(
+  receiver: Player,
+  opponent: Player,
+  holes: Hole[],
+): number[] {
+  if (receiver.handicapIndex <= opponent.handicapIndex) return [];
+  return holes
+    .filter((hole) => playerGetsStrokeOnHole(receiver, opponent, hole))
+    .map((hole) => hole.number)
+    .sort((a, b) => a - b);
+}
+
+export function higherHandicapPlayer(a: Player, b: Player): Player {
+  return a.handicapIndex >= b.handicapIndex ? a : b;
+}

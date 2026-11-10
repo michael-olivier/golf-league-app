@@ -4,6 +4,8 @@ import {
   isImmersiveScorePath,
   pageBackgroundClass,
 } from "../utils/pageBackground";
+import { AppChromeLayer } from "./AppChromeLayer";
+import { AppNotificationBell } from "./notifications/AppNotificationBell";
 import { MobileAppNav } from "./nav/MobileAppNav";
 import {
   hideBottomNavForPath,
@@ -16,25 +18,31 @@ export function Layout() {
   const { pathname } = useLocation();
   const isMobileNative = useIsMobileNative();
   const pageBg = pageBackgroundClass(pathname);
+  const homePage = pathname === "/";
   const immersiveScorePage = isImmersiveScorePath(pathname);
   const scoreSetupPage =
     pathname === "/scores" || pathname.startsWith("/scores/setup");
   const hideBottomNav = hideBottomNavForPath(pathname);
 
+  const useLightChrome = navMenuUsesLightIcon(pathname);
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {isMobileNative ? (
-        <MobileAppNav
-          pathname={pathname}
-          useLightIcon={navMenuUsesLightIcon(pathname)}
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <AppChromeLayer>
+        <AppNotificationBell
+          useLightIcon={useLightChrome}
+          reserveMenuSpace={isMobileNative}
         />
-      ) : null}
+        {isMobileNative ? (
+          <MobileAppNav pathname={pathname} useLightIcon={useLightChrome} />
+        ) : null}
+      </AppChromeLayer>
 
       <main
-        className={`flex min-h-0 flex-1 flex-col overflow-hidden px-0 pb-0 ${pageBg}`}
+        className={`relative flex min-h-0 flex-1 flex-col overflow-hidden px-0 pb-0 ${pageBg}`}
       >
         <div
-          className={`page-scroll flex min-h-0 min-w-0 flex-1 flex-col ${immersiveScorePage ? "overflow-hidden px-0 !pb-0" : scoreSetupPage ? "overflow-hidden px-4 !pb-0" : "px-4"} ${pageBg}`}
+          className={`page-scroll relative z-10 flex min-h-0 min-w-0 flex-1 flex-col ${immersiveScorePage ? "overflow-hidden px-0 !pb-0" : scoreSetupPage ? "overflow-hidden px-4 !pb-0" : "px-4"} ${homePage ? "!overflow-hidden !pt-0 !pb-0 bg-sand-hunter" : pageBg}`}
         >
           <Outlet />
         </div>

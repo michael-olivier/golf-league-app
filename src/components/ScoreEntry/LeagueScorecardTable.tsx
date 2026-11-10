@@ -16,6 +16,8 @@ import { StrokePopMarker } from "./StrokePopMarker";
 interface LeagueScorecardTableProps {
   courseName: string;
   nineLabel: string;
+  /** Hide centered course / nine heading (e.g. when wrapped in a titled card). */
+  hideTitle?: boolean;
   holes: Hole[];
   players: Player[];
   scoresForPlayer: (playerId: string) => HoleScore[] | undefined;
@@ -25,6 +27,8 @@ interface LeagueScorecardTableProps {
   };
   /** Match (Net): pops vs paired opponent + decorated gross scores. */
   casualMatchNet?: boolean;
+  /** Birdie/bogey circles and squares on gross strokes. */
+  decoratedScores?: boolean;
 }
 
 function strokeCell(score: HoleScore | undefined): string {
@@ -79,11 +83,13 @@ function MatchNetScoreCell({
 export function LeagueScorecardTable({
   courseName,
   nineLabel,
+  hideTitle = false,
   holes,
   players,
   scoresForPlayer,
   casualStrokeNet,
   casualMatchNet = false,
+  decoratedScores = false,
 }: LeagueScorecardTableProps) {
   const labels = playerTabLabels(players);
   const showWomenPar = holes.some(
@@ -97,10 +103,12 @@ export function LeagueScorecardTable({
 
   return (
     <div className="space-y-3">
-      <div className="text-center">
-        <p className="text-sm font-semibold text-[#373737]">{courseName}</p>
-        <p className="text-xs text-fairway-500">{nineLabel}</p>
-      </div>
+      {hideTitle ? null : (
+        <div className="text-center">
+          <p className="text-sm font-semibold text-[#373737]">{courseName}</p>
+          <p className="text-xs text-fairway-500">{nineLabel}</p>
+        </div>
+      )}
 
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[320px] border-collapse text-center text-[11px]">
@@ -195,6 +203,16 @@ export function LeagueScorecardTable({
                           ch,
                           casualStrokeNet.holeCount,
                         )
+                      ) : decoratedScores ? (
+                        <DecoratedScore
+                          size="sm"
+                          strokes={
+                            scores[idx] && isHolePlayed(scores[idx]!)
+                              ? scores[idx]!.strokes
+                              : null
+                          }
+                          par={h.par}
+                        />
                       ) : (
                         strokeCell(scores[idx])
                       )}

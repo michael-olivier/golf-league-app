@@ -1,11 +1,36 @@
 export type UserRole = "player" | "admin";
 export type LeagueLevel = "A" | "B";
 
+export interface RecentRoundScoreDistribution {
+  birdiesOrBetter: number;
+  pars: number;
+  bogeys: number;
+  doubleBogeys: number;
+  tripleOrWorse: number;
+}
+
+export interface RecentRoundAdvancedStats {
+  fairwaysHit: number;
+  fairwaysPossible: number;
+  greensHit: number;
+  greensPossible: number;
+  putts: number;
+}
+
 export interface PlayerRecentRound {
   courseId: string;
   playedOn: string;
   holeCount: number;
   strokes: number;
+  /** WHS score differential (GHIN), when known. */
+  scoreDifferential?: number;
+  adjustedGrossScore?: number;
+  scorePostingSide?: ScorePostingSide;
+  teeBoxId?: string;
+  nineSide?: "front" | "back";
+  holeScores?: number[];
+  distribution?: RecentRoundScoreDistribution;
+  advancedStats?: RecentRoundAdvancedStats;
 }
 
 export interface PlayerSeasonStats {
@@ -20,9 +45,14 @@ export interface Player {
   name: string;
   ghinNumber: string;
   handicapIndex: number;
+  /** GHIN low index within the current scoring window. */
+  lowHandicapIndex?: number;
+  lowHandicapIndexAsOf?: string;
   teamId: string;
   avatarUrl?: string;
   recentRound?: PlayerRecentRound;
+  /** Newest first; home stack shows up to three. */
+  recentRounds?: PlayerRecentRound[];
   /** Score-to-par by round (oldest → newest) for the home sparkline. */
   recentScoreToParTrend?: number[];
   seasonStats?: PlayerSeasonStats;
@@ -84,6 +114,11 @@ export interface Course {
   holes: Hole[];
   tees: TeeBox[];
   logoUrl?: string;
+  /** Hero photo for home screen (most recent course). */
+  heroImageUrl?: string;
+  city?: string;
+  /** US state / province abbreviation */
+  state?: string;
 }
 
 /** Casual round vs tournament round (GHIN posting category). */

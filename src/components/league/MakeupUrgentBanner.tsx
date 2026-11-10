@@ -1,20 +1,6 @@
+import { TriangleAlert } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useLeague } from "../../store/LeagueContext";
-
-export function useMakeupAttention(): {
-  openMakeupCount: number;
-  attentionCount: number;
-} {
-  const { getTeamMakeups, getPostponedMatchesForTeam } = useLeague();
-  const openMakeupCount = getTeamMakeups().filter(
-    (t) => t.makeup.status === "open",
-  ).length;
-  const needsMakeupStart = getPostponedMatchesForTeam().length;
-  return {
-    openMakeupCount,
-    attentionCount: openMakeupCount + needsMakeupStart,
-  };
-}
+import { useMakeupAttention } from "../../hooks/useMakeupAttention";
 
 type MakeupUrgentBannerProps = {
   /** Home uses hunter green; league tab uses light sand background. */
@@ -34,14 +20,18 @@ export function MakeupUrgentBanner({ surface }: MakeupUrgentBannerProps) {
   return (
     <Link
       to="/makeup"
-      className={`flex items-center justify-between rounded-[8px] px-4 py-3.5 text-sm font-semibold ${surfaceClass}`}
+      className={`flex items-center rounded-[8px] px-4 py-3.5 text-sm font-semibold ${surfaceClass}`}
     >
-      <span>
+      <TriangleAlert
+        aria-hidden
+        className="h-4 w-4 shrink-0 text-sand-brick"
+        strokeWidth={1}
+      />
+      <span className="min-w-0 pl-2.5">
         {openMakeupCount > 0
           ? `${openMakeupCount} makeup date${openMakeupCount === 1 ? "" : "s"} to coordinate`
           : "Schedule a postponed match"}
       </span>
-      <span aria-hidden>→</span>
     </Link>
   );
 }

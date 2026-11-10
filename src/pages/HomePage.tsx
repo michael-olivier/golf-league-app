@@ -1,37 +1,42 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { BottomSheet } from "../components/BottomSheet";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useHomeStackDockLift } from "../hooks/useHomeStackDockLift";
+import { CalendarDays, NotebookPen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   HomeRiseIn,
   homeCardRiseIndices,
 } from "../components/home/HomeRiseIn";
-import { ScoreTrendSparkline } from "../components/home/ScoreTrendSparkline";
-import { PlayerAvatar } from "../components/PlayerAvatar";
-import { LeagueScorecardTable } from "../components/ScoreEntry/LeagueScorecardTable";
 import {
-  MakeupUrgentBanner,
-  useMakeupAttention,
-} from "../components/league/MakeupUrgentBanner";
+  HomeStackItem,
+  HomeStackSection,
+} from "../components/home/HomeStackSection";
+import { LeagueMatchDetailModal } from "../components/league/LeagueMatchDetailModal";
 import { useLeague } from "../store/LeagueContext";
-import { formatToPar } from "../utils/scorecard";
 import {
-  matchResultSummaryLine,
-  previousCompletedTeamMatches,
-  upcomingMatchForPlayer,
+  leagueMatchPointsResult,
+  matchPointsForViewer,
+  opponentTeamIdForMatch,
 } from "../utils/leagueMatch";
-import {
-  leagueHolesForRound,
-  scorecardPlayersForMatch,
-  scorecardTitleForMatch,
-} from "../utils/matchScorecard";
-import { leagueNineLabel } from "../utils/player";
-import { playableHoles } from "../utils/playableHoles";
 import { weekCardSubtitle } from "../utils/weekDisplay";
 import { assetUrl } from "../utils/assetUrl";
+import {
+  HomeHandicapSummary,
+  HomeHeroBackdrop,
+  HomeHeroLogo,
+} from "../components/home/HomeHeroHeader";
+import { RecentRoundDetailModal } from "../components/recentRound/RecentRoundDetailModal";
 import {
   markHomeEntrancePlayed,
   shouldPlayHomeEntrance,
 } from "../components/home/homeMotion";
+import { whsScoreDifferential } from "../utils/handicap";
+import { recentCourseHeroUrl } from "../utils/recentCourseHero";
+import { homeLeagueCardGradient } from "../utils/homeLeagueCardSurface";
+import {
+  homeLeagueStackMatches,
+  recentRoundsForPlayer,
+} from "../utils/homeStacks";
+import type { PlayerRecentRound, WeeklyMatch } from "../types";
 
 function formatLongDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -41,294 +46,348 @@ function formatLongDate(iso: string): string {
   });
 }
 
-function weekFormatLabel(
-  weekNumber: number,
-  format: string,
-): string {
-  return `Week ${weekNumber} - ${format}`;
-}
+type HomeStackKey = "recent" | "league";
 
-function nextUpHeading(
-  weekNumber: number,
-  gameType: string | undefined,
-  courseName: string,
-): string {
-  const format = gameType ?? courseName;
-  return `Next up: ${weekFormatLabel(weekNumber, format)}`;
+function scoreDiffForRound(
+  round: PlayerRecentRound,
+  defaultTeeId: string | undefined,
+  getCourse: ReturnType<typeof useLeague>["getCourse"],
+): number | null {
+  if (round.scoreDifferential != null) return round.scoreDifferential;
+  const course = getCourse(round.courseId);
+  if (!course) return null;
+  const tee =
+    course.tees.find((t) => t.id === defaultTeeId) ?? course.tees[0];
+  if (!tee) return null;
+  const holes = round.holeCount === 18 ? 18 : 9;
+  return whsScoreDifferential(round.strokes, holes, tee);
 }
 
 export function HomePage() {
+  const navigate = useNavigate();
   const {
     currentPlayer,
     getCourse,
     getTeam,
     state,
-    getRound,
   } = useLeague();
 
-  const [resultsMatchId, setResultsMatchId] = useState<string | null>(null);
+  const [expandedStack, setExpandedStack] = useState<HomeStackKey | null>(null);
+  const [leagueMatchDetailId, setLeagueMatchDetailId] = useState<string | null>(
+    null,
+  );
+  const [recentRoundOpen, setRecentRoundOpen] = useState(false);
+  const [selectedRecent, setSelectedRecent] =
+    useState<PlayerRecentRound | null>(null);
 
-  const openResultsDrawer = (matchId: string) => {
-    setResultsMatchId(matchId);
-  };
-
-  const { attentionCount: makeupAttention } = useMakeupAttention();
-
-  const recent = currentPlayer.recentRound;
-  const recentCourse = recent ? getCourse(recent.courseId) : undefined;
-  const recentPar =
-    recentCourse && recent
-      ? playableHoles(
-          recentCourse.holes,
-          recent.holeCount === 18 ? 18 : 9,
-          1,
-        ).reduce((sum, h) => sum + h.par, 0)
-      : null;
-  const recentToPar =
-    recent && recentPar != null ? recent.strokes - recentPar : null;
-
-  const upcoming = upcomingMatchForPlayer(currentPlayer, state.matches);
-  const upcomingCourse = upcoming ? getCourse(upcoming.courseId) : undefined;
-  const homeTeam = upcoming
-    ? getTeam(upcoming.teamPairing.homeTeamId)
-    : undefined;
-  const awayTeam = upcoming
-    ? getTeam(upcoming.teamPairing.awayTeamId)
-    : undefined;
-
-  const previousResults = previousCompletedTeamMatches(
-    currentPlayer,
-    state.matches,
-    upcoming?.weekNumber ?? Number.MAX_SAFE_INTEGER,
+  const recentRounds = useMemo(
+    () => recentRoundsForPlayer(currentPlayer),
+    [currentPlayer],
+  );
+  const leagueMatches = useMemo(
+    () => homeLeagueStackMatches(currentPlayer, state.matches),
+    [currentPlayer, state.matches],
   );
 
-  const resultsMatch = useMemo(
+  const leagueMatchDetail = useMemo(
     () =>
-      resultsMatchId
-        ? state.matches.find((m) => m.id === resultsMatchId)
+      leagueMatchDetailId
+        ? state.matches.find((m) => m.id === leagueMatchDetailId)
         : undefined,
-    [resultsMatchId, state.matches],
+    [leagueMatchDetailId, state.matches],
   );
-
-  const resultsCourse = resultsMatch
-    ? getCourse(resultsMatch.courseId)
+  const leagueMatchDetailCourse = leagueMatchDetail
+    ? getCourse(leagueMatchDetail.courseId)
     : undefined;
-  const resultsHoles =
-    resultsCourse && resultsMatch
-      ? leagueHolesForRound(resultsCourse.holes, state.league)
-      : [];
-  const resultsPlayers = resultsMatch
-    ? scorecardPlayersForMatch(resultsMatch, state.players)
-    : [];
 
   const homeLogoUrl = state.league.homeLogoUrl
     ? assetUrl(state.league.homeLogoUrl)
     : null;
+  const heroImageUrl = recentCourseHeroUrl(currentPlayer, getCourse);
 
-  const hasRecent = !!(recent && recentCourse);
+  const hasRecent = recentRounds.length > 0;
+  const hasLeague = leagueMatches.length > 0;
   const rise = useMemo(
     () =>
       homeCardRiseIndices({
-        hasMakeup: makeupAttention > 0,
         hasRecent,
+        hasLeague,
       }),
-    [makeupAttention, hasRecent],
+    [hasRecent, hasLeague],
   );
 
   const playEntrance = useRef(shouldPlayHomeEntrance()).current;
+  const stackDockRef = useRef<HTMLDivElement>(null);
+  const leagueDockLift = useHomeStackDockLift(
+    expandedStack,
+    leagueMatches.length,
+    stackDockRef,
+  );
+
+  const stackDockStyle = useMemo((): CSSProperties | undefined => {
+    if (expandedStack !== "league" || Math.abs(leagueDockLift) < 0.5) {
+      return undefined;
+    }
+    return { transform: `translateY(${-leagueDockLift}px)` };
+  }, [expandedStack, leagueDockLift]);
 
   useEffect(() => {
     if (playEntrance) markHomeEntrancePlayed();
   }, [playEntrance]);
 
+  const toggleStack = (key: HomeStackKey) => {
+    setExpandedStack((prev) => (prev === key ? null : key));
+  };
+
+  const openRecent = (round: PlayerRecentRound) => {
+    setSelectedRecent(round);
+    setRecentRoundOpen(true);
+  };
+
+  const handleLeagueMatch = (match: WeeklyMatch) => {
+    const isUpcoming =
+      match.status === "scheduled" || match.status === "in_progress";
+    if (isUpcoming) {
+      navigate("/league");
+      return;
+    }
+    setLeagueMatchDetailId(match.id);
+  };
+
+  const modalRecent = selectedRecent ?? recentRounds[0];
+  const modalRecentCourse = modalRecent
+    ? getCourse(modalRecent.courseId)
+    : undefined;
+
   return (
-    <div className="space-y-4 pb-4">
-      {homeLogoUrl ? (
-        <div className="flex justify-center py-2">
-          <img
-            src={homeLogoUrl}
-            alt="Sandbagger"
-            width={320}
-            height={64}
-            className={`h-12 w-auto max-w-full object-contain ${playEntrance ? "home-logo-in" : ""}`}
-          />
+    <div className="relative -mx-4 flex min-h-0 flex-1 flex-col overflow-hidden">
+      <HomeHeroBackdrop imageUrl={heroImageUrl} />
+
+      <div className="relative z-10 min-h-0 flex-1">
+        <div className="flex justify-center px-4 pt-[var(--page-top-inset)]">
+          <HomeHeroLogo logoUrl={homeLogoUrl} animateLogo={playEntrance} />
         </div>
-      ) : null}
 
-      {makeupAttention > 0 && rise.makeup >= 0 ? (
-        <HomeRiseIn index={rise.makeup} animate={playEntrance}>
-          <MakeupUrgentBanner surface="hunter" />
-        </HomeRiseIn>
-      ) : null}
-
-      <HomeRiseIn index={rise.profile} animate={playEntrance}>
-      <section className="rounded-[8px] border border-sand-hunter bg-white p-4">
-        <div className="flex items-start gap-3">
-          <PlayerAvatar player={currentPlayer} size="lg" />
-          <div className="min-w-0 flex-1">
-            <p className="text-lg font-semibold text-fairway-300">
-              {currentPlayer.name}
-            </p>
-            <p className="mt-1 text-sm text-fairway-500">
-              GHIN #{currentPlayer.ghinNumber}
-            </p>
-            <p className="text-sm text-fairway-500">
-              GHIN handicap{" "}
-              <span className="font-semibold tabular-nums text-fairway-300">
-                {currentPlayer.handicapIndex.toFixed(1)}
-              </span>
-            </p>
-          </div>
+        <div className="pointer-events-none absolute left-0 right-0 top-[28%] z-30 -translate-y-1/2 px-4">
+          <HomeHandicapSummary player={currentPlayer} />
         </div>
-      </section>
-      </HomeRiseIn>
 
-      {recent && recentCourse && rise.recent >= 0 ? (
-        <HomeRiseIn index={rise.recent} animate={playEntrance}>
-        <section className="rounded-[8px] border border-sand-hunter bg-white p-4">
-          <p className="card-title">
-            Most recent round
-          </p>
-          <div className="mt-2 flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-fairway-300">
-                {recentCourse.name}
-              </p>
-              <p className="text-sm text-fairway-500">
-                {formatLongDate(recent.playedOn)} · {recent.holeCount} holes ·{" "}
-                <span className="font-semibold tabular-nums text-fairway-300">
-                  {recent.strokes}
-                </span>
-                {recentToPar != null ? (
-                  <span className="tabular-nums">
-                    {" "}
-                    ({formatToPar(recentToPar)})
-                  </span>
-                ) : null}
-              </p>
-            </div>
-            {currentPlayer.recentScoreToParTrend &&
-            currentPlayer.recentScoreToParTrend.length >= 2 ? (
-              <ScoreTrendSparkline
-                values={currentPlayer.recentScoreToParTrend}
-                className="mt-0.5 shrink-0"
-              />
-            ) : null}
-          </div>
-        </section>
-        </HomeRiseIn>
-      ) : null}
+        <div
+          ref={stackDockRef}
+          style={stackDockStyle}
+          className={`home-stack-dock absolute inset-x-4 z-10 flex flex-col ${
+            expandedStack === "league"
+              ? "home-stack-dock--league-open gap-5 pb-[max(24px,env(safe-area-inset-bottom))]"
+              : "gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          }`}
+        >
+          {hasRecent && rise.recent >= 0 ? (
+            <HomeRiseIn index={rise.recent} animate={playEntrance}>
+              <HomeStackSection
+                title="Most recent rounds"
+                icon={NotebookPen}
+                expanded={expandedStack === "recent"}
+                isBackground={expandedStack === "league"}
+                onToggle={() => toggleStack("recent")}
+                itemCount={recentRounds.length}
+                compactWhenExpanded
+              >
+                {recentRounds.map((round, index) => {
+                  const course = getCourse(round.courseId);
+                  const diff = scoreDiffForRound(
+                    round,
+                    state.league.defaultTeeBoxId,
+                    getCourse,
+                  );
+                  const expanded = expandedStack === "recent";
+                  return (
+                    <HomeStackItem
+                      key={`${round.playedOn}-${round.courseId}`}
+                      index={index}
+                      expanded={expanded}
+                      interactive={expanded || index === 0}
+                      className={
+                        index === 0
+                          ? "border-t-[3px] border-t-sand-sage bg-white"
+                          : "bg-white"
+                      }
+                      onPress={() => {
+                        if (!expanded) {
+                          setExpandedStack("recent");
+                          return;
+                        }
+                        openRecent(round);
+                      }}
+                    >
+                      <div className="mt-0 min-w-0 space-y-1.5">
+                        <div className="flex items-end justify-between gap-3">
+                          <p className="min-w-0 text-base font-medium leading-snug text-fairway-300">
+                            {course?.name ?? "Round"}
+                          </p>
+                          <p className="home-summary-card-score shrink-0 text-fairway-300">
+                            {round.strokes}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between gap-3 text-xs font-bold tracking-wide text-fairway-500">
+                          <span className="shrink-0">
+                            {formatLongDate(round.playedOn)}
+                          </span>
+                          <span className="shrink-0 text-right tabular-nums">
+                            {round.holeCount} holes
+                            {diff != null ? (
+                              <>
+                                <span> • </span>
+                                Diff {diff.toFixed(1)}
+                              </>
+                            ) : null}
+                          </span>
+                        </div>
+                      </div>
+                    </HomeStackItem>
+                  );
+                })}
+              </HomeStackSection>
+            </HomeRiseIn>
+          ) : null}
 
-      {upcoming && upcomingCourse ? (
-        <HomeRiseIn index={rise.league} animate={playEntrance}>
-        <section className="rounded-[8px] border border-sand-hunter bg-white p-4">
-          <p className="card-title">
-            League play
-          </p>
-          <Link
-            to="/league"
-            className="-mx-1 mt-2 block rounded-lg px-1 py-0.5 transition hover:bg-fairway-950/5 active:bg-fairway-950/10"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="min-w-0 text-sm font-semibold leading-snug text-fairway-300">
-                {nextUpHeading(
-                  upcoming.weekNumber,
-                  upcoming.gameType,
-                  weekCardSubtitle(state.league, upcoming, upcomingCourse),
-                )}
-              </p>
-              <span className="shrink-0 rounded-full border border-fairway-800/40 bg-fairway-950/5 px-2.5 py-1 text-xs font-medium tabular-nums text-fairway-500">
-                {formatLongDate(upcoming.date)}
-              </span>
-            </div>
-            {homeTeam && awayTeam ? (
-              <p className="mt-1.5 text-sm leading-snug text-fairway-300">
-                {homeTeam.name}
-                <span className="text-fairway-500"> vs </span>
-                {awayTeam.name}
-              </p>
-            ) : null}
-          </Link>
-
-          {previousResults.length > 0 ? (
-            <>
-              <div
-                className="my-4 border-t border-fairway-800/25"
-                role="separator"
-              />
-              <p className="mb-2 card-title">
-                Previous week
-              </p>
-              <ul className="space-y-3">
-                {previousResults.map((match) => {
+          {hasLeague && rise.league >= 0 ? (
+            <HomeRiseIn index={rise.league} animate={playEntrance}>
+              <HomeStackSection
+                title="League play"
+                icon={CalendarDays}
+                expanded={expandedStack === "league"}
+                onToggle={() => toggleStack("league")}
+                itemCount={leagueMatches.length}
+              >
+                {leagueMatches.map((match, index) => {
                   const course = getCourse(match.courseId);
-                  const formatLabel =
+                  const gameLabel =
                     match.gameType ??
                     (course
                       ? weekCardSubtitle(state.league, match, course)
                       : "League match");
-                  const resultSummary = matchResultSummaryLine(
+                  const opponentId = opponentTeamIdForMatch(
                     match,
                     currentPlayer.teamId,
-                    getTeam,
                   );
+                  const opponent = opponentId ? getTeam(opponentId) : undefined;
+                  const homeTeam = getTeam(match.teamPairing.homeTeamId);
+                  const awayTeam = getTeam(match.teamPairing.awayTeamId);
+                  const pointsComputed = leagueMatchPointsResult(
+                    match,
+                    state.players,
+                    course,
+                    state.league,
+                    state.rounds,
+                  );
+                  const points = matchPointsForViewer(
+                    match,
+                    currentPlayer.teamId,
+                    pointsComputed,
+                  );
+                  const isUpcoming =
+                    match.status === "scheduled" ||
+                    match.status === "in_progress";
+                  const expanded = expandedStack === "league";
+
+                  const headline = isUpcoming
+                    ? homeTeam && awayTeam
+                      ? `Next Up: ${homeTeam.name} vs. ${awayTeam.name}`
+                      : "Next Up: League match"
+                    : opponent
+                      ? `vs ${opponent.name}`
+                      : course?.name ?? "League match";
 
                   return (
-                    <li key={match.id} className="space-y-1.5 text-sm">
-                      <p className="font-medium leading-snug text-fairway-300">
-                        {weekFormatLabel(match.weekNumber, formatLabel)}
-                      </p>
-                      {resultSummary || match.resultLabel ? (
-                        <div className="flex items-center justify-between gap-3">
-                          {resultSummary ? (
-                            <p className="min-w-0 font-medium leading-snug text-fairway-300">
-                              {resultSummary}
-                            </p>
-                          ) : (
-                            <span />
-                          )}
-                          {match.resultLabel ? (
-                            <button
-                              type="button"
-                              onClick={() => openResultsDrawer(match.id)}
-                              className="shrink-0 font-medium text-sand-hunter underline-offset-2 hover:underline"
+                    <HomeStackItem
+                      key={match.id}
+                      index={index}
+                      expanded={expanded}
+                      interactive={expanded || index === 0}
+                      style={{
+                        background: homeLeagueCardGradient(match.id),
+                      }}
+                      className={
+                        isUpcoming && index === 0
+                          ? "border-t-[3px] border-t-sand-hunter"
+                          : ""
+                      }
+                      onPress={() => {
+                        if (!expanded) {
+                          setExpandedStack("league");
+                          return;
+                        }
+                        handleLeagueMatch(match);
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="shrink-0 rounded-full border border-sand-hunter/40 bg-white/40 px-2 py-0.5 text-[10px] font-bold tabular-nums tracking-wide text-fairway-300">
+                          Week {match.weekNumber}
+                        </span>
+                      </div>
+                      <div className="mt-1 min-w-0 space-y-1.5">
+                        <div className="flex items-end justify-between gap-3">
+                          <p className="min-w-0 text-base font-medium leading-snug">
+                            {headline}
+                          </p>
+                          {isUpcoming ? (
+                            <span
+                              className="home-summary-card-score shrink-0 opacity-0"
+                              aria-hidden
                             >
-                              View results
-                            </button>
-                          ) : null}
+                              —
+                            </span>
+                          ) : (
+                            <p className="home-summary-card-score shrink-0">
+                              {points ?? "—"}
+                            </p>
+                          )}
                         </div>
-                      ) : null}
-                    </li>
+                        <div className="flex items-center justify-between gap-3 text-xs font-bold tracking-wide">
+                          <span className="shrink-0">
+                            {formatLongDate(match.date)}
+                          </span>
+                          <span className="shrink-0 text-right tabular-nums">
+                            {gameLabel}
+                          </span>
+                        </div>
+                      </div>
+                    </HomeStackItem>
                   );
                 })}
-              </ul>
-            </>
+              </HomeStackSection>
+            </HomeRiseIn>
           ) : null}
-        </section>
-        </HomeRiseIn>
-      ) : null}
 
-      <BottomSheet
-        open={!!resultsMatchId}
-        onClose={() => setResultsMatchId(null)}
-        title={
-          resultsMatch
-            ? scorecardTitleForMatch(resultsMatch, state.league)
-            : "Scorecard"
-        }
-        tone="white"
-        contentClassName="pb-[max(24px,env(safe-area-inset-bottom))]"
-      >
-        {resultsMatch && resultsCourse && resultsHoles.length > 0 ? (
-          <LeagueScorecardTable
-            courseName={resultsCourse.name}
-            nineLabel={leagueNineLabel(state.league.nineSide)}
-            holes={resultsHoles}
-            players={resultsPlayers}
-            scoresForPlayer={(id) => getRound(resultsMatch.id, id)?.scores}
-          />
-        ) : null}
-      </BottomSheet>
+          {modalRecent && modalRecentCourse ? (
+            <RecentRoundDetailModal
+              open={recentRoundOpen}
+              onClose={() => {
+                setRecentRoundOpen(false);
+                setSelectedRecent(null);
+              }}
+              player={currentPlayer}
+              course={modalRecentCourse}
+              recent={modalRecent}
+              league={state.league}
+            />
+          ) : null}
+
+          {leagueMatchDetail && leagueMatchDetailCourse ? (
+            <LeagueMatchDetailModal
+              open={!!leagueMatchDetailId}
+              onClose={() => setLeagueMatchDetailId(null)}
+              match={leagueMatchDetail}
+              course={leagueMatchDetailCourse}
+              league={state.league}
+              viewer={currentPlayer}
+              players={state.players}
+              rounds={state.rounds}
+              getTeam={getTeam}
+            />
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

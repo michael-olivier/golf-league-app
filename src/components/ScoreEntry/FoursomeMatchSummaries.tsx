@@ -1,4 +1,4 @@
-import type { Hole, HoleScore, Player } from "../../types";
+import type { Course, Hole, HoleScore, League, Player } from "../../types";
 import { isHolePlayed } from "../../types";
 import {
   computeHeadToHeadMatch,
@@ -6,6 +6,7 @@ import {
   foursomeMatchPairs,
   playerGetsStrokeOnHole,
 } from "../../utils/matchPlay";
+import { type LeagueScoringFormat, playerNetLine } from "../../utils/leaguePoints";
 
 interface FoursomeMatchSummariesProps {
   players: Player[];
@@ -13,6 +14,9 @@ interface FoursomeMatchSummariesProps {
   scoresForPlayer: (playerId: string) => HoleScore[] | undefined;
   /** When false, compare gross scores (match gross). Default true. */
   applyHandicapStrokes?: boolean;
+  scoringFormat?: LeagueScoringFormat;
+  course?: Course;
+  league?: League;
 }
 
 function firstName(fullName: string): string {
@@ -71,6 +75,72 @@ function HoleComparisonRow({
         </span>
         <span className="font-semibold text-sand-hunter">{strokesB}</span>
       </div>
+    </div>
+  );
+}
+
+function StrokePairCard({
+  playerA,
+  playerB,
+  holes,
+  scoresA,
+  scoresB,
+  course,
+  league,
+}: {
+  playerA: Player;
+  playerB: Player;
+  holes: Hole[];
+  scoresA: HoleScore[];
+  scoresB: HoleScore[];
+  course: Course;
+  league: League;
+}) {
+  const lineA = playerNetLine(playerA, scoresA, holes, course, league);
+  const lineB = playerNetLine(playerB, scoresB, holes, course, league);
+  if (!lineA || !lineB) return null;
+
+  let verdict = "Tied net — split the point";
+  if (lineA.net < lineB.net) {
+    verdict = `${firstName(playerA.name)} wins the pairing on net`;
+  } else if (lineB.net < lineA.net) {
+    verdict = `${firstName(playerB.name)} wins the pairing on net`;
+  }
+
+  return (
+    <div className="rounded-[8px] bg-white p-3">
+      <p className="mb-3 text-center text-xs font-medium text-fairway-400">
+        Stroke play · lower net wins
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <StrokePlayerColumn player={playerA} line={lineA} />
+        <StrokePlayerColumn player={playerB} line={lineB} />
+      </div>
+      <p className="mt-3 text-center text-xs font-semibold text-fairway-300">
+        {verdict}
+      </p>
+    </div>
+  );
+}
+
+function StrokePlayerColumn({
+  player,
+  line,
+}: {
+  player: Player;
+  line: NonNullable<ReturnType<typeof playerNetLine>>;
+}) {
+  return (
+    <div className="text-center">
+      <p className="truncate text-sm font-medium text-fairway-200">
+        {player.name}
+      </p>
+      <p className="mt-1 text-lg font-semibold tabular-nums text-sand-hunter">
+        {line.net}
+      </p>
+      <p className="mt-1 text-xs tabular-nums text-fairway-500">
+        {line.gross} − {line.adjustment} net
+      </p>
     </div>
   );
 }
@@ -173,14 +243,72 @@ function PlayerMatchColumn({
   );
 }
 
-export function FoursomeMatchSummaries({
-  players,
-  holes,
-  scoresForPlayer,
-  applyHandicapStrokes = true,
-}: FoursomeMatchSummariesProps) {
+function pairSummaryHasData(
+  idA: string,
+  idB: string,
+  byId: Map<string, Player>,
+  holes: Hole[],
+  scoresForPlayer: FoursomeMatchSummariesProps["scoresForPlayer"],
+  strokeMode: boolean,
+  course: Course | undefined,
+  league: League | undefined,
+): boolean {
+  const playerA = byId.get(idA);
+  const playerB = byId.get(idB);
+  const scoresA = scoresForPlayer(idA);
+  const scoresB = scoresForPlayer(idB);
+  if (!playerA || !playerB || !scoresA || !scoresB) return false;
+  if (strokeMode && course && league) {
+    return !!(
+      playerNetLine(playerA, scoresA, holes, course, league) &&
+      playerNetLine(playerB, scoresB, holes, course, league)
+    );
+  }
+  return holes.some((_, i) => {
+    const a = scoresA[i];
+    const b = scoresB[i];
+    return isHolePlayed(a) || isHolePlayed(b);
+  });
+}
+
+export function foursomeSummariesHasData(
+  props: FoursomeMatchSummariesProps,
+): boolean {
+  const { players, holes, scoresForPlayer, scoringFormat, course, league } =
+    props;
   const byId = new Map(players.map((p) => [p.id, p]));
   const pairs = foursomeMatchPairs(players.map((p) => p.id));
+  const strokeMode = scoringFormat === "stroke" && !!course && !!league;
+  return pairs.some(([idA, idB]) =>
+    pairSummaryHasData(
+      idA,
+      idB,
+      byId,
+      holes,
+      scoresForPlayer,
+      strokeMode,
+      course,
+      league,
+    ),
+  );
+}
+
+export function FoursomeMatchSummaries(props: FoursomeMatchSummariesProps) {
+  const {
+    players,
+    holes,
+    scoresForPlayer,
+    applyHandicapStrokes = true,
+    scoringFormat = "match",
+    course,
+    league,
+  } = props;
+
+  if (!foursomeSummariesHasData(props)) return null;
+
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const pairs = foursomeMatchPairs(players.map((p) => p.id));
+  const strokeMode = scoringFormat === "stroke" && course && league;
 
   return (
     <div className="space-y-3">
@@ -190,6 +318,20 @@ export function FoursomeMatchSummaries({
         const scoresA = scoresForPlayer(idA);
         const scoresB = scoresForPlayer(idB);
         if (!playerA || !playerB || !scoresA || !scoresB) return null;
+        if (strokeMode) {
+          return (
+            <StrokePairCard
+              key={`${idA}-${idB}`}
+              playerA={playerA}
+              playerB={playerB}
+              holes={holes}
+              scoresA={scoresA}
+              scoresB={scoresB}
+              course={course}
+              league={league}
+            />
+          );
+        }
         return (
           <MatchPairCard
             key={`${idA}-${idB}`}

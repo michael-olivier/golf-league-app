@@ -11,6 +11,7 @@ interface IphoneFrameProps {
 function AppViewport({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="iphone-island" aria-hidden />
       {children}
       <div
         id={IPHONE_OVERLAY_ROOT_ID}
@@ -39,7 +40,6 @@ export function IphoneFrame({ children }: IphoneFrameProps) {
         <div className="iphone-side-button iphone-side-button--volume-down" />
         <div className="iphone-side-button iphone-side-button--power" />
         <div className="iphone-screen">
-          <div className="iphone-island" aria-hidden />
           <AppViewport>{children}</AppViewport>
         </div>
         <div className="iphone-home-indicator" aria-hidden />
