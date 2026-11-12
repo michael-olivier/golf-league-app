@@ -44,7 +44,7 @@ export function MobileAppNav({ pathname, useLightIcon }: MobileAppNavProps) {
               : "text-sand-hunter hover:bg-fairway-950/5"
           }`}
         >
-          <SquareMenu className="h-9 w-9" strokeWidth={0.5} aria-hidden />
+          <SquareMenu className="h-9 w-9" strokeWidth={1} aria-hidden />
         </button>
 
         {open ? (
@@ -70,7 +70,7 @@ export function MobileAppNav({ pathname, useLightIcon }: MobileAppNavProps) {
                       }`}
                     >
                       <item.Icon className="h-6 w-6" />
-                      {item.label}
+                      <span className="tracking-wide">{item.label}</span>
                     </NavLink>
                   </li>
                 );

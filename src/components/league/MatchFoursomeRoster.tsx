@@ -1,4 +1,5 @@
 import type { Player, Team, WeeklyMatch } from "../../types";
+import { TeamNameMultiline } from "./leagueTeamStack";
 
 function firstName(fullName: string): string {
   return fullName.split(/\s+/)[0] ?? fullName;
@@ -109,23 +110,33 @@ export function MatchFoursomeRoster({
     <div
       className={`space-y-3 ${dividerBelow ? "border-b border-sand-hunter/40 pb-3" : ""}`}
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 items-end gap-3">
         {homeTeam ? (
           <p
-            className="truncate text-[10px] font-bold uppercase tracking-wide"
+            className="text-[10px] font-bold uppercase tracking-wide"
             style={{ color: homeTeam.color }}
           >
-            {homeTeam.name}
+            <TeamNameMultiline
+              name={homeTeam.name}
+              uppercase
+              align="left"
+              lineClassName="leading-[1.15]"
+            />
           </p>
         ) : (
           <span />
         )}
         {awayTeam ? (
           <p
-            className="truncate text-right text-[10px] font-bold uppercase tracking-wide"
+            className="text-right text-[10px] font-bold uppercase tracking-wide"
             style={{ color: awayTeam.color }}
           >
-            {awayTeam.name}
+            <TeamNameMultiline
+              name={awayTeam.name}
+              uppercase
+              align="right"
+              lineClassName="leading-[1.15]"
+            />
           </p>
         ) : null}
       </div>

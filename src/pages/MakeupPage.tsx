@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageTitleSection } from "../components/PageTitleSection";
 import { PlayerAvatar } from "../components/PlayerAvatar";
 import { useLeague } from "../store/LeagueContext";
@@ -14,7 +15,7 @@ import {
 function ConfirmedPill() {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-sand-sage/25 px-3 py-1.5 text-xs font-semibold text-sand-hunter">
-      <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={0.5} aria-hidden />
+      <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={1} aria-hidden />
       Confirmed
     </span>
   );
@@ -61,7 +62,7 @@ function ProposalConfirmationsList({
             </span>
             <Check
               className="h-4 w-4 shrink-0 text-sand-hunter"
-              strokeWidth={0.5}
+              strokeWidth={1}
               aria-hidden
             />
           </li>
@@ -72,6 +73,7 @@ function ProposalConfirmationsList({
 }
 
 export function MakeupPage() {
+  const navigate = useNavigate();
   const {
     state,
     currentPlayer,
@@ -120,7 +122,11 @@ export function MakeupPage() {
 
   return (
     <div className="space-y-5 pb-4">
-      <PageTitleSection title="Makeup dates">
+      <PageTitleSection
+        title="Makeup dates"
+        onBack={() => navigate("/league")}
+        backAriaLabel="Back to league"
+      >
         <p className="text-sm text-fairway-400">
           Coordinate a new date when a weekly match is postponed. Anyone in the
           match can propose a time;{" "}

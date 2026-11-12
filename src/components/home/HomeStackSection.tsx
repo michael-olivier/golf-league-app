@@ -17,8 +17,12 @@ interface HomeStackSectionProps {
   className?: string;
   /** Collapsed stack recedes while the other section is expanded. */
   isBackground?: boolean;
+  /** Recede toward top (upper stack) or bottom (lower stack — behind tab bar). */
+  backgroundAnchor?: "top" | "bottom";
   /** Tighter vertical spacing between cards when expanded. */
   compactWhenExpanded?: boolean;
+  /** Cap expanded height to this many cards; additional items scroll in the list. */
+  expandedVisibleMax?: number;
 }
 
 export function HomeStackSection({
@@ -30,12 +34,22 @@ export function HomeStackSection({
   children,
   className = "",
   isBackground = false,
+  backgroundAnchor = "top",
   compactWhenExpanded = false,
+  expandedVisibleMax,
 }: HomeStackSectionProps) {
   const compact = compactWhenExpanded && expanded;
   const { slotPx, gapPx } = homeStackExpandedMetrics(compact);
   const collapsedHeight = homeStackCollapsedHeight(isBackground);
-  const expandedHeight = homeStackExpandedHeight(itemCount, compact);
+  const expandedSlotCount =
+    expanded && expandedVisibleMax != null
+      ? Math.min(itemCount, expandedVisibleMax)
+      : itemCount;
+  const scrollableExpanded =
+    expanded &&
+    expandedVisibleMax != null &&
+    itemCount > expandedVisibleMax;
+  const expandedHeight = homeStackExpandedHeight(expandedSlotCount, compact);
 
   const sectionStyle: CSSProperties = {
     height: expanded ? expandedHeight : collapsedHeight,
@@ -48,7 +62,11 @@ export function HomeStackSection({
     <section
       className={`home-stack-section ${expanded ? "is-expanded" : ""} ${
         compact ? "is-compact-expanded" : ""
-      } ${isBackground ? "is-background" : ""} ${className}`.trim()}
+      } ${scrollableExpanded ? "is-scrollable-expanded" : ""} ${
+        isBackground
+          ? `is-background is-background--${backgroundAnchor}`
+          : ""
+      } ${className}`.trim()}
       style={sectionStyle}
     >
       <button

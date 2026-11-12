@@ -9,7 +9,7 @@ import {
 const navIconClass = "h-6 w-6 shrink-0";
 
 const lucideNavProps = {
-  strokeWidth: 0.5,
+  strokeWidth: 1,
   "aria-hidden": true as const,
 };
 

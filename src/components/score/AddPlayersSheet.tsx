@@ -43,7 +43,7 @@ function GolferResultRow({
         aria-label={added ? `${entry.name} already added` : `Add ${entry.name}`}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-sand-hunter bg-white text-sand-hunter disabled:opacity-40"
       >
-        <Plus className="h-5 w-5" strokeWidth={0.5} aria-hidden />
+        <Plus className="h-5 w-5" strokeWidth={1} aria-hidden />
       </button>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-[#373737]">

@@ -27,7 +27,7 @@ export function CourseNameWithFavorite({
             aria-label={backAriaLabel}
             className="-ml-1 flex shrink-0 items-center justify-center p-1 text-inherit transition active:opacity-70"
           >
-            <ChevronLeft className="h-6 w-6" strokeWidth={0.5} aria-hidden />
+            <ChevronLeft className="h-6 w-6" strokeWidth={1} aria-hidden />
           </button>
         ) : null}
         <h2 className="min-w-0 flex-1 text-lg font-semibold text-inherit">

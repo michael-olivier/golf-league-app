@@ -22,6 +22,9 @@ export function isImmersiveScorePath(pathname: string): boolean {
 
 function isLeaguePath(pathname: string): boolean {
   if (pathname === "/league" || pathname.startsWith("/league/")) return true;
+  if (pathname === "/leagues/find" || pathname.startsWith("/leagues/")) {
+    return true;
+  }
   if (pathname === "/scores/league") return true;
   if (pathname === "/makeup") return true;
   if (pathname === "/handicaps") return true;
@@ -46,10 +49,10 @@ export function pageBackgroundTone(
 
 const toneBgClass: Record<PageBackgroundTone, string> = {
   home: "bg-sand-hunter",
-  league: "bg-sand-sage",
+  league: "bg-sand-bg",
   "casual-score": "bg-sand-score-mist",
   rules: "bg-sand-vanilla-custard",
-  settings: "bg-sand-champagne",
+  settings: "bg-sand-hunter",
 };
 
 export function pageBackgroundClass(pathname: string): string {
@@ -57,9 +60,18 @@ export function pageBackgroundClass(pathname: string): string {
   return tone ? toneBgClass[tone] : "bg-sand-bg";
 }
 
+/** Main League tab — full-bleed photo hero (not sub-routes like /league/matches). */
+export function isLeagueHeroPath(pathname: string): boolean {
+  return pathname === "/league";
+}
+
 /** White menu icon on darker page backgrounds. */
 export function navMenuUsesLightIcon(pathname: string): boolean {
   const tone = pageBackgroundTone(pathname);
-  return tone === "home" || tone === "league";
+  return (
+    tone === "home" ||
+    tone === "settings" ||
+    isLeagueHeroPath(pathname)
+  );
 }
 

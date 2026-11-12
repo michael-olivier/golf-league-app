@@ -305,7 +305,7 @@ export function ScoresPage({ variant }: ScoresPageProps) {
         aria-label="Back to league"
         className="-ml-1 shrink-0 p-1 text-white"
       >
-        <ChevronLeft className="h-6 w-6" strokeWidth={0.5} aria-hidden />
+        <ChevronLeft className="h-6 w-6" strokeWidth={1} aria-hidden />
       </button>
       <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5 py-0.5 text-left text-white">
         {match?.weekNumber != null ? (
@@ -409,7 +409,7 @@ export function ScoresPage({ variant }: ScoresPageProps) {
           aria-label="Back to round setup"
           className="shrink-0 p-1 pl-0 text-sand-hunter"
         >
-          <ChevronLeft className="h-6 w-6" strokeWidth={0.5} aria-hidden />
+          <ChevronLeft className="h-6 w-6" strokeWidth={1} aria-hidden />
         </button>
         <p className="min-w-0 flex-1 pt-0.5 text-left text-lg font-semibold capitalize leading-snug text-[#373737]">
           {course.name}

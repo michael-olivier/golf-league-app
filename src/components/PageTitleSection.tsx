@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { pageBackgroundTone } from "../utils/pageBackground";
+import {
+  isLeagueHeroPath,
+  pageBackgroundTone,
+} from "../utils/pageBackground";
 
 interface PageTitleSectionProps {
   title: string;
@@ -21,8 +24,15 @@ export function PageTitleSection({
 }: PageTitleSectionProps) {
   const { pathname } = useLocation();
   const tone = pageBackgroundTone(pathname);
-  const blackHeaderInk = tone === "league" || tone === "casual-score";
-  const titleColor = blackHeaderInk ? "text-[#000]" : "text-fairway-300";
+  const whiteHeaderInk = tone === "settings" || isLeagueHeroPath(pathname);
+  const blackHeaderInk =
+    (tone === "league" && !isLeagueHeroPath(pathname)) ||
+    tone === "casual-score";
+  const titleColor = whiteHeaderInk
+    ? "text-white"
+    : blackHeaderInk
+      ? "text-[#000]"
+      : "text-fairway-300";
 
   return (
     <header>
@@ -34,7 +44,7 @@ export function PageTitleSection({
             aria-label={backAriaLabel}
             className={`-ml-1 flex shrink-0 items-center justify-center p-1 transition active:opacity-70 ${titleColor}`}
           >
-            <ChevronLeft className="h-6 w-6" strokeWidth={0.5} aria-hidden />
+            <ChevronLeft className="h-6 w-6" strokeWidth={1} aria-hidden />
           </button>
         ) : null}
         <h1
@@ -47,7 +57,13 @@ export function PageTitleSection({
       </div>
       {children ? (
         <div
-          className={`page-title-gutter mt-2 space-y-2 ${blackHeaderInk ? "[&_*]:text-[#000]" : ""}`}
+          className={`page-title-gutter mt-2 space-y-2 ${
+            whiteHeaderInk
+              ? "[&_*]:text-white/90"
+              : blackHeaderInk
+                ? "[&_*]:text-[#000]"
+                : ""
+          }`}
         >
           {children}
         </div>

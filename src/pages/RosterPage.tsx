@@ -5,7 +5,7 @@ import {
   Search,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BottomSheet } from "../components/BottomSheet";
 import { PageTitleSection } from "../components/PageTitleSection";
 import { HandicapBadge } from "../components/HandicapBadge";
@@ -20,7 +20,7 @@ const leagueTabs: { level: LeagueLevel; label: string }[] = [
 
 const iconProps = {
   className: "h-4 w-4 shrink-0",
-  strokeWidth: 0.5 as const,
+  strokeWidth: 1 as const,
   "aria-hidden": true as const,
 };
 
@@ -38,6 +38,7 @@ function teamMatchesFilter(
 }
 
 export function RosterPage() {
+  const navigate = useNavigate();
   const { state } = useLeague();
   const [activeLevel, setActiveLevel] = useState<LeagueLevel>("A");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -69,7 +70,11 @@ export function RosterPage() {
   return (
     <div className="space-y-4 pb-4">
       <div className="space-y-4">
-        <PageTitleSection title="Roster" />
+        <PageTitleSection
+          title="Roster"
+          onBack={() => navigate("/league")}
+          backAriaLabel="Back to league"
+        />
         {director ? (
           <p className="page-title-gutter text-sm text-fairway-500">
             League Director:{" "}
@@ -220,7 +225,7 @@ export function RosterPage() {
               aria-label="Search"
               className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[6px] bg-sand-hunter text-white"
             >
-              <Search className="h-5 w-5" strokeWidth={0.5} aria-hidden />
+              <Search className="h-5 w-5" strokeWidth={1} aria-hidden />
             </button>
           </div>
         </label>

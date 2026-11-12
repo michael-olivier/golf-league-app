@@ -175,6 +175,17 @@ export function formatPlayerTotal(total: number, toParFormatted: string): string
   return `${total} (${toParFormatted})`;
 }
 
+/** e.g. `Holes 1 & 4` or `Holes 1, 4, & 9` for match-play stroke allocation. */
+export function formatPopHoleList(holeNumbers: number[]): string {
+  if (holeNumbers.length === 0) return "";
+  if (holeNumbers.length === 1) return `Hole ${holeNumbers[0]}`;
+  if (holeNumbers.length === 2) {
+    return `Holes ${holeNumbers[0]} & ${holeNumbers[1]}`;
+  }
+  const head = holeNumbers.slice(0, -1).join(", ");
+  return `Holes ${head}, & ${holeNumbers[holeNumbers.length - 1]}`;
+}
+
 /** Hole numbers (course) where `receiver` gets a stroke vs `opponent` on this set of holes. */
 export function popHoleNumbersForMatch(
   receiver: Player,

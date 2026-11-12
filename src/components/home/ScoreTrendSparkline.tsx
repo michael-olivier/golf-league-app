@@ -4,6 +4,8 @@ interface ScoreTrendSparklineProps {
   width?: number;
   height?: number;
   className?: string;
+  /** Mark every point (Figma home scoring trend). */
+  dotAllPoints?: boolean;
 }
 
 export function ScoreTrendSparkline({
@@ -11,6 +13,7 @@ export function ScoreTrendSparkline({
   width = 80,
   height = 44,
   className = "",
+  dotAllPoints = false,
 }: ScoreTrendSparklineProps) {
   if (values.length < 2) return null;
 
@@ -60,17 +63,13 @@ export function ScoreTrendSparkline({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {(() => {
-        const lastPoint = points[points.length - 1].split(",").map(Number);
+      {points.map((pt, i) => {
+        if (!dotAllPoints && i !== points.length - 1) return null;
+        const [cx, cy] = pt.split(",").map(Number);
         return (
-          <circle
-            cx={lastPoint[0]}
-            cy={lastPoint[1]}
-            r={2.5}
-            fill={stroke}
-          />
+          <circle key={i} cx={cx} cy={cy} r={2.75} fill={stroke} />
         );
-      })()}
+      })}
     </svg>
   );
 }

@@ -43,7 +43,7 @@ export function recentRoundsForPlayer(player: Player): PlayerRecentRound[] {
   }));
 }
 
-/** Upcoming (if any) first, then completed matches newest → oldest — up to 3. */
+/** Upcoming (if any) first, then completed matches newest → oldest. */
 export function homeLeagueStackMatches(
   player: Player,
   matches: WeeklyMatch[],
@@ -54,8 +54,7 @@ export function homeLeagueStackMatches(
   const rows: WeeklyMatch[] = [];
   if (upcoming) rows.push(upcoming);
   for (const match of completed) {
-    if (rows.length >= 3) break;
     rows.push(match);
   }
-  return rows.slice(0, 3);
+  return rows;
 }

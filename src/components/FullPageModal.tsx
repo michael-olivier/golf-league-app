@@ -14,6 +14,8 @@ interface FullPageModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode | ((requestClose: () => void) => ReactNode);
+  /** Distance from panel top to scroll content (px). Floats grabber over inset. */
+  contentTopInsetPx?: number;
 }
 
 export function FullPageModal({
@@ -21,6 +23,7 @@ export function FullPageModal({
   onClose,
   children,
   footer,
+  contentTopInsetPx,
 }: FullPageModalProps) {
   const [phase, setPhase] = useState<"open" | "closing" | "closed">(() =>
     open ? "open" : "closed",
@@ -86,24 +89,40 @@ export function FullPageModal({
           isClosing ? "bottom-sheet-panel-exit" : "bottom-sheet-panel-enter"
         }`}
       >
-        <div className="shrink-0 border-b border-fairway-800/15 px-4 pt-3 pb-2">
+        {contentTopInsetPx != null ? (
           <div
-            className="mx-auto h-1 w-10 rounded-full bg-fairway-800/25"
+            className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center"
             aria-hidden
-          />
-        </div>
+          >
+            <div className="h-1 w-10 rounded-full bg-fairway-800/25" />
+          </div>
+        ) : (
+          <div className="shrink-0 border-b border-fairway-800/15 px-4 pt-3 pb-2">
+            <div
+              className="mx-auto h-1 w-10 rounded-full bg-fairway-800/25"
+              aria-hidden
+            />
+          </div>
+        )}
         <div
-          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 ${
+          className={`full-page-modal-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 ${
+            contentTopInsetPx == null ? "pt-2" : ""
+          } ${
             footerContent
               ? "pb-[calc(5.25rem+max(12px,env(safe-area-inset-bottom)))]"
               : "pb-2"
           }`}
+          style={
+            contentTopInsetPx != null
+              ? { paddingTop: contentTopInsetPx }
+              : undefined
+          }
         >
           {children}
         </div>
         {footerContent ? (
           <div className="full-page-modal-footer" aria-hidden={false}>
-            <div className="full-page-modal-footer-pill border border-sand-hunter/25">
+            <div className="glass-floating-pill full-page-modal-footer-pill border border-white/30">
               {footerContent}
             </div>
           </div>

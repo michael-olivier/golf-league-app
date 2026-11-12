@@ -58,8 +58,8 @@ export function LeaguePointsBreakdown({
   const formatNote = bestBall
     ? "Lower team best ball gross total wins all 3 points — no splits."
     : result.format === "stroke"
-      ? "Gross minus course handicap strokes equals net. Lower net wins the pairing point (½ each on a tie). Team point goes to the lower combined team net."
-      : "Net match play by hole; more holes won takes the pairing point (½ each if tied). Team point uses combined team net.";
+      ? "Gross minus course handicap strokes equals net. Lower net wins the pairing point (no point on a tie). Team point goes to the lower combined team net."
+      : "Net match play by hole; more holes won takes the pairing point (no point if tied). Team point uses combined team net.";
 
   return (
     <section className="rounded-[8px] border border-sand-hunter bg-white p-3">

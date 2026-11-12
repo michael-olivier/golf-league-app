@@ -1,4 +1,4 @@
-import type { Hole, HoleScore, Player } from "../../types";
+import type { Course, Hole, HoleScore, League, Player } from "../../types";
 import { isHolePlayed } from "../../types";
 import { playerTabLabels } from "../../utils/player";
 import { totalStrokes } from "../../store/LeagueContext";
@@ -6,9 +6,12 @@ import {
   courseStrokesOnHole,
   grossAndNetTotals,
 } from "../../utils/casualScoring";
+import { playerNetLine } from "../../utils/leaguePoints";
 import {
+  computeHeadToHeadMatch,
   matchOpponentForPlayer,
   playerGetsStrokeOnHole,
+  popsOnHole,
 } from "../../utils/matchPlay";
 import { DecoratedScore } from "./DecoratedScore";
 import { StrokePopMarker } from "./StrokePopMarker";
@@ -29,6 +32,10 @@ interface LeagueScorecardTableProps {
   casualMatchNet?: boolean;
   /** Birdie/bogey circles and squares on gross strokes. */
   decoratedScores?: boolean;
+  /** League match summary modal layout. */
+  summaryFormat?: "stroke" | "match";
+  course?: Course;
+  league?: League;
 }
 
 function strokeCell(score: HoleScore | undefined): string {
@@ -80,6 +87,38 @@ function MatchNetScoreCell({
   );
 }
 
+function playerWonMatchHole(
+  player: Player,
+  opponent: Player,
+  hole: Hole,
+  playerScore: HoleScore | undefined,
+  opponentScore: HoleScore | undefined,
+): boolean {
+  if (
+    !playerScore ||
+    !opponentScore ||
+    !isHolePlayed(playerScore) ||
+    !isHolePlayed(opponentScore)
+  ) {
+    return false;
+  }
+  const netPlayer =
+    playerScore.strokes! -
+    popsOnHole(
+      player.handicapIndex,
+      opponent.handicapIndex,
+      hole.handicapIndex,
+    );
+  const netOpponent =
+    opponentScore.strokes! -
+    popsOnHole(
+      opponent.handicapIndex,
+      player.handicapIndex,
+      hole.handicapIndex,
+    );
+  return netPlayer < netOpponent;
+}
+
 export function LeagueScorecardTable({
   courseName,
   nineLabel,
@@ -90,6 +129,9 @@ export function LeagueScorecardTable({
   casualStrokeNet,
   casualMatchNet = false,
   decoratedScores = false,
+  summaryFormat,
+  course,
+  league,
 }: LeagueScorecardTableProps) {
   const labels = playerTabLabels(players);
   const showWomenPar = holes.some(
@@ -126,8 +168,18 @@ export function LeagueScorecardTable({
                 </th>
               ))}
               <th className="min-w-[2rem] px-1 py-1.5 font-semibold text-[#373737]">
-                Tot
+                Total
               </th>
+              {summaryFormat === "stroke" ? (
+                <th className="min-w-[2rem] px-1 py-1.5 font-semibold text-[#373737]">
+                  Net
+                </th>
+              ) : null}
+              {summaryFormat === "match" ? (
+                <th className="min-w-[2rem] px-1 py-1.5 font-semibold text-[#373737]">
+                  Holes
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody className="tabular-nums text-[#373737]">
@@ -141,6 +193,8 @@ export function LeagueScorecardTable({
                 </td>
               ))}
               <td className="px-1 py-1.5 font-semibold">{parTotal}</td>
+              {summaryFormat === "stroke" ? <td className="px-1 py-1.5" /> : null}
+              {summaryFormat === "match" ? <td className="px-1 py-1.5" /> : null}
             </tr>
             {showWomenPar ? (
               <tr className="border-b border-sand-hunter/25 bg-white/50">
@@ -153,6 +207,8 @@ export function LeagueScorecardTable({
                   </td>
                 ))}
                 <td className="px-1 py-1.5 font-semibold">{parWomenTotal}</td>
+                {summaryFormat === "stroke" ? <td className="px-1 py-1.5" /> : null}
+                {summaryFormat === "match" ? <td className="px-1 py-1.5" /> : null}
               </tr>
             ) : null}
             <tr className="border-b border-sand-hunter/40 bg-white/30">
@@ -165,6 +221,8 @@ export function LeagueScorecardTable({
                 </td>
               ))}
               <td className="px-1 py-1.5" />
+              {summaryFormat === "stroke" ? <td className="px-1 py-1.5" /> : null}
+              {summaryFormat === "match" ? <td className="px-1 py-1.5" /> : null}
             </tr>
             {players.map((player) => {
               const scores = scoresForPlayer(player.id) ?? [];
@@ -179,6 +237,22 @@ export function LeagueScorecardTable({
                       casualStrokeNet.holeCount,
                     )
                   : null;
+              const leagueLine =
+                summaryFormat === "stroke" && course && league
+                  ? playerNetLine(player, scores, holes, course, league)
+                  : null;
+              const opponent = matchOpponentForPlayer(player.id, players);
+              const matchResult =
+                summaryFormat === "match" && opponent
+                  ? computeHeadToHeadMatch(
+                      player,
+                      opponent,
+                      holes,
+                      scores,
+                      scoresForPlayer(opponent.id) ?? [],
+                      { applyHandicapStrokes: true },
+                    )
+                  : null;
               return (
                 <tr
                   key={player.id}
@@ -187,8 +261,28 @@ export function LeagueScorecardTable({
                   <td className="sticky left-0 z-10 max-w-[4.5rem] truncate bg-white px-1 py-2 text-left text-[11px] font-semibold text-sand-hunter">
                     {label}
                   </td>
-                  {holes.map((h, idx) => (
-                    <td key={h.number} className="px-0.5 py-1.5 font-medium">
+                  {holes.map((h, idx) => {
+                    const opponentScores =
+                      opponent != null
+                        ? (scoresForPlayer(opponent.id) ?? [])
+                        : [];
+                    const wonHole =
+                      summaryFormat === "match" &&
+                      opponent != null &&
+                      playerWonMatchHole(
+                        player,
+                        opponent,
+                        h,
+                        scores[idx],
+                        opponentScores[idx],
+                      );
+                    return (
+                    <td
+                      key={h.number}
+                      className={`px-0.5 py-1.5 font-medium ${
+                        wonHole ? "league-scorecard-hole-won" : ""
+                      }`}
+                    >
                       {casualMatchNet ? (
                         <MatchNetScoreCell
                           score={scores[idx]}
@@ -217,12 +311,30 @@ export function LeagueScorecardTable({
                         strokeCell(scores[idx])
                       )}
                     </td>
-                  ))}
+                  );
+                  })}
                   <td className="px-1 py-2 font-semibold">
-                    {totals?.gross != null && totals.net != null
-                      ? `${totals.gross} (${totals.net})`
-                      : (totalStrokes(scores) ?? "—")}
+                    {leagueLine != null
+                      ? leagueLine.gross
+                      : totals?.gross != null && totals.net != null
+                        ? `${totals.gross} (${totals.net})`
+                        : (totalStrokes(scores) ?? "—")}
                   </td>
+                  {summaryFormat === "stroke" ? (
+                    <td className="px-1 py-2 font-semibold">
+                      {leagueLine?.net ?? "—"}
+                    </td>
+                  ) : null}
+                  {summaryFormat === "match" && matchResult ? (
+                    <td className="px-1 py-2 font-semibold">
+                      {matchResult.playerAId === player.id
+                        ? matchResult.holesWonA
+                        : matchResult.holesWonB}
+                    </td>
+                  ) : null}
+                  {summaryFormat === "match" && !matchResult ? (
+                    <td className="px-1 py-2">—</td>
+                  ) : null}
                 </tr>
               );
             })}

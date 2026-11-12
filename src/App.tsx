@@ -11,7 +11,9 @@ import { Layout } from "./components/Layout";
 import { AdminPage } from "./pages/AdminPage";
 import { HandicapsPage } from "./pages/HandicapsPage";
 import { HomePage } from "./pages/HomePage";
+import { FindLeaguesPage } from "./pages/FindLeaguesPage";
 import { LeaguePage } from "./pages/LeaguePage";
+import { LeaguePreviousMatchesPage } from "./pages/LeaguePreviousMatchesPage";
 import { RulesPage } from "./pages/RulesPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { MakeupPage } from "./pages/MakeupPage";
@@ -68,6 +70,11 @@ function AppRoutes() {
                 <Route element={<Layout />}>
                   <Route index element={<HomePage />} />
                   <Route path="league" element={<LeaguePage />} />
+                  <Route
+                    path="league/matches"
+                    element={<LeaguePreviousMatchesPage />}
+                  />
+                  <Route path="leagues/find" element={<FindLeaguesPage />} />
                   <Route path="scores" element={<ScoreCourseSelectPage />} />
                   <Route path="scores/setup" element={<ScoreSetupPage />} />
                   <Route path="scores/league" element={<ScoresPage variant="league" />} />

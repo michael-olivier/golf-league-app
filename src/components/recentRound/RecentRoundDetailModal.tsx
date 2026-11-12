@@ -56,7 +56,7 @@ function AdvancedStatCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-[8px] border border-sand-hunter bg-white p-3">
+    <div className="touch-pan-y flex h-full flex-col rounded-[8px] border border-sand-hunter bg-white p-3">
       <p className="card-title min-h-[2.75rem] shrink-0 leading-snug">{title}</p>
       <div className="mt-2 flex flex-1 flex-col justify-end text-sm text-fairway-300">
         {children}
@@ -147,6 +147,7 @@ export function RecentRoundDetailModal({
     <FullPageModal
       open={open}
       onClose={onClose}
+      contentTopInsetPx={60}
       footer={(requestClose) => (
         <FullPageModalFooterRow>
           <button
@@ -154,7 +155,7 @@ export function RecentRoundDetailModal({
             onClick={() => setShareOpen(true)}
             className={modalFooterBtnSecondary}
           >
-            <Share2 aria-hidden className="h-4 w-4" strokeWidth={0.5} />
+            <Share2 aria-hidden className="h-4 w-4" strokeWidth={1} />
             SHARE
           </button>
           <button
@@ -168,42 +169,44 @@ export function RecentRoundDetailModal({
       )}
     >
       <div className="space-y-4 pb-4">
-        <header className="flex items-end justify-between gap-4 pt-2">
+        <header className="recent-round-header flex items-end justify-between gap-6">
           <div>
-            <p className="text-5xl font-semibold leading-none tabular-nums text-fairway-300">
+            <p className="recent-round-header__gross tabular-nums text-fairway-300">
               {adjustedGross}
             </p>
-            <p className="mt-2 text-[9px] font-medium uppercase leading-snug tracking-wide text-fairway-500">
+            <p className="recent-round-header__stat-label mt-1">
               Adjusted
               <br />
-              Gross Score
+              Gross score
             </p>
           </div>
-          <dl className="min-w-[8.75rem] space-y-2 text-sm">
-            <div className="flex items-baseline justify-between gap-6">
-              <dt className="text-[10px] font-bold tracking-wide text-fairway-500">
-                TO PAR
-              </dt>
-              <dd
-                className={`font-semibold tabular-nums ${toParLine.className}`}
+          <div className="flex shrink-0 items-end gap-8">
+            <div className="recent-round-header__to-par text-right">
+              <p
+                className={`recent-round-header__to-par-value tabular-nums ${toParLine.className}`}
               >
                 {toParLine.text}
-              </dd>
+              </p>
+              <p className="recent-round-header__stat-label mt-1">
+                To par
+                <br aria-hidden />
+                <span aria-hidden="true">&nbsp;</span>
+              </p>
             </div>
             {differential != null ? (
-              <div className="flex items-baseline justify-between gap-6">
-                <dt className="text-[10px] font-bold tracking-wide text-fairway-500">
-                  DIFFERENTIAL
-                </dt>
-                <dd className="font-semibold tabular-nums text-fairway-300">
+              <div className="text-right">
+                <p className="text-sm font-semibold tabular-nums text-fairway-300">
                   {differential.toFixed(1)}
-                </dd>
+                </p>
+                <p className="recent-round-header__stat-label mt-1">
+                  Differential
+                </p>
               </div>
             ) : null}
-          </dl>
+          </div>
         </header>
 
-        <section className="rounded-[8px] border border-sand-hunter bg-white p-4 shadow-[0_2px_12px_rgb(0_0_0_/0.06)]">
+        <section className="touch-pan-y rounded-[8px] border border-sand-hunter bg-white p-4 shadow-[0_2px_12px_rgb(0_0_0_/0.06)]">
           <div className="flex items-start justify-between gap-3">
             <span className="min-w-0 text-xs text-fairway-500">
               {formatRoundDate(recent.playedOn)}
@@ -252,15 +255,9 @@ export function RecentRoundDetailModal({
           </div>
         </section>
 
-        <section className="rounded-[8px] border border-sand-hunter bg-white p-3">
+        <section className="touch-pan-y rounded-[8px] border border-sand-hunter bg-white p-3">
           <p className="card-title mb-3">Scorecard</p>
-          <div
-            className={
-              recent.holeCount === 18
-                ? "max-h-[min(52vh,22rem)] space-y-6 overflow-y-auto overscroll-contain pr-1"
-                : ""
-            }
-          >
+          <div className={recent.holeCount === 18 ? "space-y-6" : undefined}>
             {recent.holeCount === 18 ? (
               <>
                 <LeagueScorecardTable

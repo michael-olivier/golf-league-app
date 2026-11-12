@@ -144,78 +144,62 @@ export const players: Player[] = (["A", "B"] as const).flatMap((leagueLevel) =>
               lowHandicapIndexAsOf: "2026-10-21",
               recentRound: {
                 courseId: "course-oakmont",
-                playedOn: "2026-05-24",
-                holeCount: 9,
-                strokes: 42,
-                adjustedGrossScore: 42,
-                scoreDifferential: 2.1,
-                scorePostingSide: "home",
+                playedOn: "2026-05-31",
+                holeCount: 18,
+                strokes: 77,
                 teeBoxId: "oakmont-white",
-                nineSide: "back",
-                holeScores: [5, 5, 5, 4, 5, 5, 4, 5, 4],
-                distribution: {
-                  birdiesOrBetter: 0,
-                  pars: 5,
-                  bogeys: 2,
-                  doubleBogeys: 2,
-                  tripleOrWorse: 0,
-                },
-                advancedStats: {
-                  fairwaysHit: 4,
-                  fairwaysPossible: 9,
-                  greensHit: 3,
-                  greensPossible: 9,
-                  putts: 20,
-                },
+                holeScores: [
+                  4, 5, 4, 4, 5, 4, 4, 5, 3, 4, 5, 4, 5, 4, 4, 4, 5, 4,
+                ],
               },
               recentRounds: [
                 {
                   courseId: "course-oakmont",
-                  playedOn: "2026-05-24",
-                  holeCount: 9,
-                  strokes: 42,
-                  adjustedGrossScore: 42,
-                  scoreDifferential: 2.1,
-                  scorePostingSide: "home",
+                  playedOn: "2026-05-31",
+                  holeCount: 18,
+                  strokes: 77,
                   teeBoxId: "oakmont-white",
-                  nineSide: "back",
-                  holeScores: [5, 5, 5, 4, 5, 5, 4, 5, 4],
-                  distribution: {
-                    birdiesOrBetter: 0,
-                    pars: 5,
-                    bogeys: 2,
-                    doubleBogeys: 2,
-                    tripleOrWorse: 0,
-                  },
-                  advancedStats: {
-                    fairwaysHit: 4,
-                    fairwaysPossible: 9,
-                    greensHit: 3,
-                    greensPossible: 9,
-                    putts: 20,
-                  },
+                  holeScores: [
+                    4, 5, 4, 4, 5, 4, 4, 5, 3, 4, 5, 4, 5, 4, 4, 4, 5, 4,
+                  ],
                 },
                 {
                   courseId: "course-oakmont",
-                  playedOn: "2026-05-10",
-                  holeCount: 9,
-                  strokes: 38,
-                  scoreDifferential: 1.4,
+                  playedOn: "2026-05-17",
+                  holeCount: 18,
+                  strokes: 83,
                   teeBoxId: "oakmont-blue",
+                  holeScores: [
+                    4, 5, 4, 4, 5, 4, 4, 5, 3, 5, 5, 4, 6, 5, 5, 4, 5, 6,
+                  ],
+                },
+                {
+                  courseId: "course-oakmont",
+                  playedOn: "2026-05-03",
+                  holeCount: 9,
+                  strokes: 35,
                   nineSide: "front",
-                  holeScores: [4, 5, 4, 3, 4, 4, 3, 5, 4],
+                  holeScores: [4, 4, 3, 3, 4, 4, 3, 5, 5],
                 },
                 {
                   courseId: "course-pinehurst",
-                  playedOn: "2026-04-26",
+                  playedOn: "2026-04-19",
                   holeCount: 9,
-                  strokes: 40,
-                  scoreDifferential: 3.2,
+                  strokes: 36,
                   nineSide: "front",
-                  holeScores: [5, 4, 4, 4, 5, 4, 4, 5, 5],
+                  holeScores: [4, 4, 4, 3, 4, 4, 3, 5, 5],
+                },
+                {
+                  courseId: "course-oakmont",
+                  playedOn: "2026-04-05",
+                  holeCount: 9,
+                  strokes: 38,
+                  nineSide: "front",
+                  holeScores: [4, 5, 4, 4, 5, 4, 4, 5, 3],
                 },
               ],
-              recentScoreToParTrend: [8, 7, 6, 5, 6],
+              recentScoreToParTrend: [2, 0, -1, 11, 5],
+              recentScoringAverageTrend: [76, 72, 70, 83, 77],
             }
           : {}),
         seasonStats: {
@@ -247,7 +231,7 @@ const oakmontHoles = standardPars.map((par, i) => {
 export const courses: Course[] = [
   {
     id: "course-oakmont",
-    name: "Oakmont Valley Golf Club",
+    name: "Oakmont Valley GC",
     city: "Santa Rosa",
     state: "CA",
     logoUrl: "/logos/oakmont-valley.svg",
@@ -304,7 +288,7 @@ export const matches: WeeklyMatch[] = [
   {
     id: "match-week-0",
     weekNumber: 1,
-    date: "2026-05-03",
+    date: "2026-05-02",
     courseId: "course-oakmont",
     gameType: "Match play",
     status: "completed",
@@ -312,13 +296,25 @@ export const matches: WeeklyMatch[] = [
       homeTeamId: "team-a-02",
       awayTeamId: "team-a-01",
     },
-    foursomes: [],
+    foursomes: [
+      {
+        id: "foursome-week-0",
+        matchId: "match-week-0",
+        playerIds: [
+          "player-a-02-1",
+          "player-a-02-2",
+          "player-a-01-1",
+          "player-a-01-2",
+        ],
+        designatedScorerId: "player-a-01-1",
+      },
+    ],
     resultLabel: "Lost 1–2",
   },
   {
     id: "match-week-1",
     weekNumber: 3,
-    date: "2026-05-17",
+    date: "2026-05-16",
     courseId: "course-oakmont",
     gameType: "Stroke play",
     status: "completed",
@@ -339,14 +335,14 @@ export const matches: WeeklyMatch[] = [
         designatedScorerId: "player-a-01-1",
       },
     ],
-    resultLabel: "Won 2–1",
+    resultLabel: "Won 3–0",
   },
   {
     id: "match-week-2-aces",
     weekNumber: 2,
-    date: "2026-05-10",
+    date: "2026-05-09",
     courseId: "course-oakmont",
-    gameType: "Best ball",
+    gameType: "Match play",
     status: "completed",
     teamPairing: {
       homeTeamId: "team-a-01",
@@ -372,7 +368,7 @@ export const matches: WeeklyMatch[] = [
     weekNumber: 2,
     date: "2026-05-24",
     courseId: "course-oakmont",
-    gameType: "Best ball",
+    gameType: "Stroke play",
     status: "completed",
     teamPairing: {
       homeTeamId: "team-a-03",
@@ -395,9 +391,10 @@ export const matches: WeeklyMatch[] = [
   {
     id: "match-week-4",
     weekNumber: 4,
-    date: "2026-06-07",
+    date: "2026-06-06",
+    startTime: "16:20",
     courseId: "course-oakmont",
-    gameType: "Skins",
+    gameType: "Match play",
     status: "in_progress",
     teamPairing: {
       homeTeamId: "team-a-01",
@@ -478,14 +475,16 @@ const week1Rounds = Object.fromEntries(
   ]),
 );
 
-/** Team best ball: one entered card per team (designated scorers). */
-const week2BestBallTeamLines: Record<string, number[]> = {
-  "player-a-01-1": [4, 5, 4, 3, 4, 4, 3, 5, 4],
-  "player-a-03-1": [5, 5, 5, 4, 5, 5, 4, 5, 5],
+/** Match play week 2 — full foursome scorecards. */
+const week2MatchLines: Record<string, number[]> = {
+  "player-a-01-1": [4, 5, 4, 3, 5, 4, 4, 5, 4],
+  "player-a-01-2": [4, 6, 4, 4, 4, 5, 3, 6, 4],
+  "player-a-03-1": [5, 5, 4, 4, 4, 4, 3, 5, 4],
+  "player-a-03-2": [6, 5, 5, 3, 5, 5, 4, 7, 5],
 };
 
 const week2Rounds = Object.fromEntries(
-  Object.entries(week2BestBallTeamLines).map(([playerId, strokes]) => [
+  Object.entries(week2MatchLines).map(([playerId, strokes]) => [
     roundKey("match-week-2-aces", playerId),
     buildSimpleRound(playerId, strokes),
   ]),

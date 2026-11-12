@@ -85,7 +85,7 @@ function splitPoint(
 ): { home: number; away: number } {
   if (compare < 0) return { home: 1, away: 0 };
   if (compare > 0) return { home: 0, away: 1 };
-  return { home: 0.5, away: 0.5 };
+  return { home: 0, away: 0 };
 }
 
 export function playerNetLine(
@@ -239,8 +239,8 @@ export function computeLeagueMatchPoints(
       const awayPlayer = aIsHome ? playerB : playerA;
 
       let summary: string;
-      if (split.home === 0.5) {
-        summary = `${firstName(homePlayer.name)} and ${firstName(awayPlayer.name)} tied net (${homeNet}) — split the point`;
+      if (split.home === 0 && split.away === 0) {
+        summary = `${firstName(homePlayer.name)} and ${firstName(awayPlayer.name)} tied net (${homeNet}) — no point awarded`;
       } else if (split.home === 1) {
         summary = `${firstName(homePlayer.name)} ${homeNet} net beats ${firstName(awayPlayer.name)} ${awayNet} net`;
       } else {
@@ -279,8 +279,8 @@ export function computeLeagueMatchPoints(
       const awayPlayer = aIsHome ? playerB : playerA;
 
       let summary: string;
-      if (split.home === 0.5) {
-        summary = `${firstName(homePlayer.name)} and ${firstName(awayPlayer.name)} halved (${homeWon}–${awayWon} holes) — split the point`;
+      if (split.home === 0 && split.away === 0) {
+        summary = `${firstName(homePlayer.name)} and ${firstName(awayPlayer.name)} halved (${homeWon}–${awayWon} holes) — no point awarded`;
       } else if (split.home === 1) {
         summary = `${result.matchStatus} — ${firstName(homePlayer.name)} wins the point`;
       } else {
@@ -337,8 +337,8 @@ export function computeLeagueMatchPoints(
   awayPoints += teamSplit.away;
 
   let teamSummary: string;
-  if (teamSplit.home === 0.5) {
-    teamSummary = `Team nets tied at ${homeTeamNet} — split the team point`;
+  if (teamSplit.home === 0 && teamSplit.away === 0) {
+    teamSummary = `Team nets tied at ${homeTeamNet} — no team point awarded`;
   } else if (teamSplit.home === 1) {
     teamSummary = `Home ${homeTeamNet} net vs away ${awayTeamNet} net`;
   } else {

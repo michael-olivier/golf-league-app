@@ -2,17 +2,15 @@ import type { ComponentType } from "react";
 import {
   NavHomeIcon,
   NavLeagueIcon,
-  NavRulesIcon,
   NavScoreIcon,
   NavSettingsIcon,
 } from "./NavIcons";
 
 export const navItems = [
-  { to: "/", label: "Home", Icon: NavHomeIcon },
-  { to: "/league", label: "League", Icon: NavLeagueIcon },
-  { to: "/scores", label: "Score", Icon: NavScoreIcon },
-  { to: "/rules", label: "Rules", Icon: NavRulesIcon },
-  { to: "/settings", label: "Settings", Icon: NavSettingsIcon },
+  { to: "/", label: "HOME", Icon: NavHomeIcon },
+  { to: "/league", label: "LEAGUE", Icon: NavLeagueIcon },
+  { to: "/scores", label: "SCORE", Icon: NavScoreIcon },
+  { to: "/settings", label: "SETTINGS", Icon: NavSettingsIcon },
 ] as const satisfies ReadonlyArray<{
   to: string;
   label: string;
@@ -42,6 +40,8 @@ export function isNavItemActive(pathname: string, to: string): boolean {
     return (
       pathname === "/league" ||
       pathname.startsWith("/league/") ||
+      pathname === "/leagues/find" ||
+      pathname.startsWith("/leagues/") ||
       pathname === "/scores/league"
     );
   }

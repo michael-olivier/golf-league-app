@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+import { HomeHeroBackdrop } from "../components/home/HomeHeroHeader";
 import { PageTitleSection } from "../components/PageTitleSection";
+import { assetUrl } from "../utils/assetUrl";
 import { Switch } from "../components/Switch";
 import { useLeague } from "../store/LeagueContext";
 import {
@@ -8,6 +10,9 @@ import {
   type GeolocationStatus,
 } from "../store/LocationPreferencesContext";
 import { formatCoordsLabel } from "../utils/userLocationLabel";
+
+const settingsCardClass =
+  "app-glass-card rounded-xl border border-white/60 px-4 py-3";
 
 function locationStatusLabel(
   enabled: boolean,
@@ -60,67 +65,70 @@ export function SettingsPage() {
       : []),
   ];
 
+  const settingsHeroUrl = assetUrl("photos/settings-golf-aerial.jpg");
+
   return (
-    <div className="space-y-4 pb-4">
-      <PageTitleSection title="Settings">
-        <p className="text-sm text-fairway-400">
-          Signed in as{" "}
-          <span className="text-fairway-200">{currentPlayer.name}</span>
-        </p>
-      </PageTitleSection>
+    <div className="relative -mx-4 flex min-h-0 flex-1 flex-col">
+      <HomeHeroBackdrop imageUrl={settingsHeroUrl} />
 
-      <section className="rounded-xl border border-fairway-800 bg-fairway-900/40 px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-fairway-200">Location services</p>
-            <p className="mt-0.5 text-xs text-fairway-500">
-              Sort course search results nearest to you first on the Score tab.
-            </p>
-            <p className="mt-2 text-xs text-fairway-400">
-              {locationStatusLabel(
-                locationServicesEnabled,
-                geoStatus,
-                locationServicesEnabled ? locationDescription : null,
-              )}
-            </p>
-            {locationServicesEnabled && coords && (
-              <p className="mt-1 font-mono text-[10px] text-fairway-600">
-                {formatCoordsLabel(coords)}
+      <div className="relative z-10 space-y-4 px-4 pb-4 pt-[var(--page-top-inset)]">
+        <PageTitleSection title="Settings">
+          <p className="text-sm">
+            Signed in as{" "}
+            <span className="font-medium text-white">{currentPlayer.name}</span>
+          </p>
+        </PageTitleSection>
+
+        <section className={settingsCardClass}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="app-glass-card__title">Location services</p>
+              <p className="app-glass-card__body mt-0.5">
+                Sort course search results nearest to you first on the Score tab.
               </p>
-            )}
-            {locationServicesEnabled && (
-              <button
-                type="button"
-                onClick={() => requestLocation({ force: true })}
-                className="mt-2 text-xs font-medium text-fairway-400 underline"
-              >
-                Update location
-              </button>
-            )}
+              <p className="app-glass-card__body mt-2">
+                {locationStatusLabel(
+                  locationServicesEnabled,
+                  geoStatus,
+                  locationServicesEnabled ? locationDescription : null,
+                )}
+              </p>
+              {locationServicesEnabled && coords && (
+                <p className="app-glass-card__mono mt-1">
+                  {formatCoordsLabel(coords)}
+                </p>
+              )}
+              {locationServicesEnabled && (
+                <button
+                  type="button"
+                  onClick={() => requestLocation({ force: true })}
+                  className="app-glass-card__action mt-2"
+                >
+                  Update location
+                </button>
+              )}
+            </div>
+            <Switch
+              checked={locationServicesEnabled}
+              aria-label="Location services"
+              onChange={setLocationServicesEnabled}
+            />
           </div>
-          <Switch
-            checked={locationServicesEnabled}
-            aria-label="Location services"
-            onChange={setLocationServicesEnabled}
-          />
-        </div>
-      </section>
+        </section>
 
-      <ul className="space-y-2">
-        {links.map((item) => (
-          <li key={item.to}>
-            <Link
-              to={item.to}
-              className="block rounded-xl border border-fairway-800 bg-fairway-900/40 px-4 py-3 transition hover:border-fairway-600"
-            >
-              <span className="font-medium text-fairway-200">{item.label}</span>
-              <span className="mt-0.5 block text-xs text-fairway-500">
-                {item.description}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <ul className="space-y-2">
+          {links.map((item) => (
+            <li key={item.to}>
+              <Link to={item.to} className={settingsCardClass}>
+                <span className="app-glass-card__title">{item.label}</span>
+                <span className="app-glass-card__body mt-0.5 block">
+                  {item.description}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

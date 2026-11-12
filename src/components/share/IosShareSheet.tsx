@@ -128,7 +128,7 @@ function ShareContact({
           {initial}
         </span>
         <span className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 border-white bg-[#34C759] shadow-sm">
-          <MessageCircle aria-hidden className="h-3 w-3 text-white" strokeWidth={0.75} fill="white" />
+          <MessageCircle aria-hidden className="h-3 w-3 text-white" strokeWidth={1} fill="white" />
         </span>
       </span>
       <ShareRowLabel>{name}</ShareRowLabel>
@@ -260,7 +260,7 @@ export function IosShareSheet({
             <Bookmark
               aria-hidden
               className="h-7 w-7 text-[#FF9500]"
-              strokeWidth={0.5}
+              strokeWidth={1}
             />
           </ShareSquircleApp>
         </ShareScrollRow>
@@ -269,19 +269,19 @@ export function IosShareSheet({
 
         <ShareScrollRow>
           <ShareSystemAction label="Copy">
-            <Copy aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={0.5} />
+            <Copy aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={1} />
           </ShareSystemAction>
           <ShareSystemAction label="Add to New Quick Note">
-            <StickyNote aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={0.5} />
+            <StickyNote aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={1} />
           </ShareSystemAction>
           <ShareSystemAction label="Bookmark">
-            <Bookmark aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={0.5} />
+            <Bookmark aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={1} />
           </ShareSystemAction>
           <ShareSystemAction label="Save to Files">
-            <RectangleHorizontal aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={0.5} />
+            <RectangleHorizontal aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={1} />
           </ShareSystemAction>
           <ShareSystemAction label="More">
-            <ChevronDown aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={0.5} />
+            <ChevronDown aria-hidden className="h-[22px] w-[22px] text-black" strokeWidth={1} />
           </ShareSystemAction>
         </ShareScrollRow>
 

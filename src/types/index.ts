@@ -55,6 +55,8 @@ export interface Player {
   recentRounds?: PlayerRecentRound[];
   /** Score-to-par by round (oldest → newest) for the home sparkline. */
   recentScoreToParTrend?: number[];
+  /** 18-hole scoring average by round (oldest → newest) for the home trend chart. */
+  recentScoringAverageTrend?: number[];
   seasonStats?: PlayerSeasonStats;
 }
 
@@ -210,6 +212,8 @@ export interface WeeklyMatch {
   id: string;
   weekNumber: number;
   date: string;
+  /** Local tee time on match date (24h `HH:mm`). */
+  startTime?: string;
   courseId: string;
   /** e.g. Skins, Closest to the Pin — shown when the league uses one home course. */
   gameType?: string;

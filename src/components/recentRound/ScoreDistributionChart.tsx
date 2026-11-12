@@ -50,7 +50,7 @@ export function ScoreDistributionChart({
     <button
       type="button"
       onClick={toggleMode}
-      className="w-full rounded-[8px] border border-sand-hunter bg-white p-3 text-left"
+      className="touch-pan-y w-full rounded-[8px] border border-sand-hunter bg-white p-3 text-left"
       aria-label={
         mode === "percentage"
           ? "Scoring summary, showing percentages. Tap to show totals."

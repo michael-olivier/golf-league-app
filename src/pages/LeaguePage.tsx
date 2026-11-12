@@ -1,59 +1,33 @@
-import { Link } from "react-router-dom";
+import { HomeHeroBackdrop } from "../components/home/HomeHeroHeader";
 import { PageTitleSection } from "../components/PageTitleSection";
 import { LeagueWeekSection } from "../components/league/LeagueWeekSection";
 import { MakeupUrgentBanner } from "../components/league/MakeupUrgentBanner";
+import { LeagueNavTileGrid } from "../components/league/LeagueNavTileGrid";
 import { useLeague } from "../store/LeagueContext";
+import { assetUrl } from "../utils/assetUrl";
 
 export function LeaguePage() {
   const { state, getCourse } = useLeague();
   const homeCourse = getCourse(state.league.homeCourseId);
-
-  const links = [
-    {
-      to: "/roster",
-      label: "Roster",
-      description: "Teams and players",
-    },
-    {
-      to: "/handicaps",
-      label: "Handicaps",
-      description: "GHIN indexes",
-    },
-    {
-      to: "/makeup",
-      label: "Makeup dates",
-      description: "Reschedule postponed weeks",
-    },
-  ];
+  const leagueHeroUrl = assetUrl("photos/league-golf-swing.jpg");
 
   return (
-    <div className="space-y-4 pb-4">
-      <PageTitleSection
-        title={`${state.league.name} League`}
-        uppercase={false}
-      >
-        {homeCourse ? (
-          <p className="text-sm text-fairway-500">{homeCourse.name}</p>
-        ) : null}
-      </PageTitleSection>
+    <div className="relative -mx-4 flex min-h-0 flex-1 flex-col">
+      <HomeHeroBackdrop imageUrl={leagueHeroUrl} />
 
-      <MakeupUrgentBanner surface="hunter" />
+      <div className="relative z-10 px-4 pb-2 pt-[var(--page-top-inset)]">
+        <PageTitleSection title={`${state.league.name} League`} uppercase>
+          {homeCourse ? (
+            <p className="text-sm font-medium text-white/90">{homeCourse.name}</p>
+          ) : null}
+        </PageTitleSection>
 
-      <LeagueWeekSection />
-
-      <ul className="space-y-2">
-        {links.map((item) => (
-          <li key={item.to}>
-            <Link
-              to={item.to}
-              className="block rounded-[8px] border border-sand-hunter bg-white px-4 py-3 transition hover:bg-sand-champagne/40"
-            >
-              <p className="font-medium text-fairway-300">{item.label}</p>
-              <p className="text-xs text-fairway-500">{item.description}</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <div className="flex flex-col gap-2">
+          <MakeupUrgentBanner surface="hero" className="mt-4" />
+          <LeagueWeekSection />
+          <LeagueNavTileGrid />
+        </div>
+      </div>
     </div>
   );
 }

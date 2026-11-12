@@ -19,15 +19,18 @@ export function HomeHeroBackdrop({ imageUrl }: HomeHeroBackdropProps) {
       {imageUrl ? (
         <div
           aria-hidden
-          className="absolute inset-0 bg-cover bg-center"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${imageUrl})` }}
         />
       ) : (
-        <div aria-hidden className="absolute inset-0 bg-sand-hunter" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-sand-hunter"
+        />
       )}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-sand-hunter"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-sand-hunter"
       />
     </>
   );
@@ -71,12 +74,14 @@ interface HomeHeroLogoProps {
 export function HomeHeroLogo({ logoUrl, animateLogo = false }: HomeHeroLogoProps) {
   if (!logoUrl) return null;
   return (
-    <img
-      src={logoUrl}
-      alt="Sandbagger"
-      width={320}
-      height={64}
-      className={`h-11 w-auto max-w-full object-contain ${animateLogo ? "home-logo-in" : ""}`}
-    />
+    <div className="flex w-full justify-center">
+      <img
+        src={logoUrl}
+        alt="Sandbagger"
+        width={320}
+        height={64}
+        className={`mx-auto block h-11 w-auto max-w-full object-contain ${animateLogo ? "home-logo-in" : ""}`}
+      />
+    </div>
   );
 }

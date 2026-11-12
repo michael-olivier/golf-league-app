@@ -15,10 +15,6 @@ import {
   modalFooterBtnPrimary,
   modalFooterBtnSecondary,
 } from "../FullPageModalFooter";
-import {
-  FoursomeMatchSummaries,
-  foursomeSummariesHasData,
-} from "../ScoreEntry/FoursomeMatchSummaries";
 import { LeagueScorecardTable } from "../ScoreEntry/LeagueScorecardTable";
 import { IosShareSheet } from "../share/IosShareSheet";
 import {
@@ -31,23 +27,13 @@ import {
   leagueMatchPointsResult,
   matchPointsForViewer,
 } from "../../utils/leagueMatch";
-import {
-  isBestBallAllOrNothingResult,
-  leagueScoringFormat,
-} from "../../utils/leaguePoints";
+import { leagueScoringFormat } from "../../utils/leaguePoints";
 import { matchOpponentForPlayer } from "../../utils/matchPlay";
 import { isHolePlayed } from "../../types";
-import { isTeamBestBallGame } from "../../utils/bestBall";
-import {
-  MatchFoursomeRoster,
-  matchFoursomeRosterHasData,
-  rosterSlots,
-} from "./MatchFoursomeRoster";
-import {
-  TeamBestBallScorecard,
-  teamBestBallTableHasData,
-} from "./TeamBestBallScorecard";
-import { LeaguePointsBreakdown } from "./LeaguePointsBreakdown";
+import { matchFoursomeRosterHasData } from "./MatchFoursomeRoster";
+import { LeagueNetScoringCard } from "./LeagueNetScoringCard";
+import { LeagueFinalScoresCard } from "./LeagueFinalScoresCard";
+import { LeagueSummarySection } from "./LeagueSummarySection";
 
 interface LeagueMatchDetailModalProps {
   open: boolean;
@@ -66,13 +52,18 @@ function formatMatchDate(iso: string): string {
     weekday: "long",
     month: "long",
     day: "numeric",
-    year: "numeric",
   });
 }
 
-function gameTypeTitle(gameType: string | undefined, fallback: string): string {
-  const raw = gameType ?? fallback;
-  return raw.replace(/\b([a-z])/g, (m) => m.toUpperCase());
+function formatSubtitle(gameType: string | undefined): string {
+  const g = (gameType ?? "").toLowerCase();
+  if (g.includes("match") && !g.includes("stroke")) return "Match Play";
+  return "Stroke Play";
+}
+
+function displayPoints(points: string | null): string {
+  if (points == null) return "—";
+  return points.replace(/\u2013/g, "-");
 }
 
 export function LeagueMatchDetailModal({
@@ -103,7 +94,7 @@ export function LeagueMatchDetailModal({
     [match, players, course, league, rounds],
   );
   const points = matchPointsForViewer(match, viewer.teamId, pointsResult);
-  const formatLabel = gameTypeTitle(match.gameType, course.name);
+  const formatLabel = formatSubtitle(match.gameType);
   const nineLabel = leagueNineLabel(league.nineSide);
   const holes = useMemo(
     () => leagueHolesForRound(course.holes, league),
@@ -113,7 +104,6 @@ export function LeagueMatchDetailModal({
     () => scorecardPlayersForMatch(match, players),
     [match, players],
   );
-  const isBestBall = isTeamBestBallGame(match.gameType);
 
   const shareTitle = useMemo(() => {
     const opponent = matchOpponentForPlayer(viewer.id, scorecardPlayers);
@@ -130,73 +120,17 @@ export function LeagueMatchDetailModal({
     [rounds, match.id],
   );
 
-  const foursomeSummaryProps = useMemo(
-    () => ({
-      players: scorecardPlayers,
-      holes,
-      scoresForPlayer,
-      applyHandicapStrokes: scoringFormat === "match",
-      scoringFormat,
-      course,
-      league,
-    }),
-    [scorecardPlayers, holes, scoresForPlayer, scoringFormat, course, league],
-  );
+  const showNetScoring = matchFoursomeRosterHasData(match, scorecardPlayers);
 
-  const roster = useMemo(
+  const showScorecard = useMemo(
     () =>
-      rosterSlots(
-        match,
-        scorecardPlayers,
-        match.teamPairing.homeTeamId,
-        match.teamPairing.awayTeamId,
-      ),
-    [match, scorecardPlayers],
-  );
-
-  const homePartnerScores = useMemo(
-    () =>
-      [roster.homeA?.id, roster.homeB?.id]
-        .filter((id): id is string => !!id)
-        .map((id) => scoresForPlayer(id)),
-    [roster.homeA?.id, roster.homeB?.id, scoresForPlayer],
-  );
-
-  const awayPartnerScores = useMemo(
-    () =>
-      [roster.awayA?.id, roster.awayB?.id]
-        .filter((id): id is string => !!id)
-        .map((id) => scoresForPlayer(id)),
-    [roster.awayA?.id, roster.awayB?.id, scoresForPlayer],
-  );
-
-  const showPairingSummaries =
-    !isBestBall && foursomeSummariesHasData(foursomeSummaryProps);
-
-  const showHeadToHead = useMemo(() => {
-    if (scoringFormat === "stroke") return false;
-    return (
-      matchFoursomeRosterHasData(match, scorecardPlayers) || showPairingSummaries
-    );
-  }, [scoringFormat, match, scorecardPlayers, showPairingSummaries]);
-
-  const showIndividualScorecard = useMemo(
-    () =>
-      !isBestBall &&
       scorecardPlayers.some((player) => {
         const scores = scoresForPlayer(player.id);
         return scores?.some(
           (score, index) => index < holes.length && isHolePlayed(score),
         );
       }),
-    [isBestBall, scorecardPlayers, holes, scoresForPlayer],
-  );
-
-  const showBestBallScorecard = useMemo(
-    () =>
-      isBestBall &&
-      teamBestBallTableHasData(holes, homePartnerScores, awayPartnerScores),
-    [isBestBall, holes, homePartnerScores, awayPartnerScores],
+    [scorecardPlayers, holes, scoresForPlayer],
   );
 
   return (
@@ -211,7 +145,7 @@ export function LeagueMatchDetailModal({
               onClick={() => setShareOpen(true)}
               className={modalFooterBtnSecondary}
             >
-              <Share2 aria-hidden className="h-4 w-4" strokeWidth={0.5} />
+              <Share2 aria-hidden className="h-4 w-4" strokeWidth={1} />
               SHARE
             </button>
             <button
@@ -224,101 +158,91 @@ export function LeagueMatchDetailModal({
           </FullPageModalFooterRow>
         )}
       >
-        <div className="space-y-4 pb-4 pt-3">
-          <header className="mt-3 flex items-end justify-between gap-4">
-            <div className="min-w-0 space-y-1.5">
-              <p className="text-sm font-bold text-sand-hunter">{`Week ${match.weekNumber}:`}</p>
+        <div className="space-y-3 pb-4 pt-3">
+          <header className="league-match-detail-header mt-3">
+            <p className="league-match-detail-header__week">
+              Week {match.weekNumber}
+            </p>
+            <div className="league-match-detail-header__grid">
+              <p className="league-match-detail-header__course">{course.name}</p>
               {homeTeam && awayTeam ? (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                <div className="league-match-detail-header__pills">
                   <button
                     type="button"
                     onClick={() => openTeam(homeTeam.id)}
-                    className="rounded-full border border-sand-hunter/40 bg-fairway-950/5 px-2.5 py-0.5 text-xs font-bold tracking-wide text-sand-hunter transition hover:border-sand-hunter hover:bg-fairway-100 active:scale-[0.98]"
+                    className="league-match-detail-header__pill max-w-[min(100%,9.5rem)] rounded-full border border-sand-hunter/40 bg-fairway-950/5 px-2.5 py-0.5 text-xs font-bold tracking-wide text-sand-hunter transition hover:border-sand-hunter hover:bg-fairway-100 active:scale-[0.98]"
                   >
-                    {homeTeam.name}
+                    <span className="league-match-detail-header__pill-label">
+                      {homeTeam.name}
+                    </span>
                   </button>
-                  <span className="text-xs font-bold text-fairway-400">vs.</span>
+                  <span className="league-match-detail-header__vs">vs.</span>
                   <button
                     type="button"
                     onClick={() => openTeam(awayTeam.id)}
-                    className="rounded-full border border-sand-hunter/40 bg-fairway-950/5 px-2.5 py-0.5 text-xs font-bold tracking-wide text-sand-hunter transition hover:border-sand-hunter hover:bg-fairway-100 active:scale-[0.98]"
+                    className="league-match-detail-header__pill max-w-[min(100%,9.5rem)] rounded-full border border-sand-hunter/40 bg-fairway-950/5 px-2.5 py-0.5 text-xs font-bold tracking-wide text-sand-hunter transition hover:border-sand-hunter hover:bg-fairway-100 active:scale-[0.98]"
                   >
-                    {awayTeam.name}
+                    <span className="league-match-detail-header__pill-label">
+                      {awayTeam.name}
+                    </span>
                   </button>
                 </div>
-              ) : null}
-              <p className="text-xs text-fairway-500">
+              ) : (
+                <div className="league-match-detail-header__pills" />
+              )}
+              <p className="league-match-detail-header__meta">
                 {formatMatchDate(match.date)}
               </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-2xl font-semibold leading-none tabular-nums text-fairway-300">
-                {points ?? "—"}
+              <p className="league-summary-header-score league-match-detail-header__score tabular-nums text-fairway-300">
+                {displayPoints(points)}
               </p>
-              <p className="mt-1.5 text-sm font-semibold leading-snug text-fairway-300">
+              <p className="league-match-detail-header__meta league-match-detail-header__format">
                 {formatLabel}
               </p>
             </div>
           </header>
 
-          {pointsResult &&
-          (pointsResult.pairings.length > 0 ||
-            isBestBallAllOrNothingResult(pointsResult)) ? (
-            <LeaguePointsBreakdown
-              result={pointsResult}
+          {showNetScoring ? (
+            <LeagueNetScoringCard
+              match={match}
               players={scorecardPlayers}
-              getTeam={getTeam}
+              viewerTeamId={viewer.teamId}
+              homeTeam={homeTeam}
+              awayTeam={awayTeam}
+              holes={holes}
+              scoringFormat={scoringFormat}
             />
           ) : null}
 
-          {showHeadToHead ? (
-            <section className="rounded-[8px] border border-sand-hunter bg-white p-3">
-              <p className="card-title mb-3">Head-to-head</p>
-              <MatchFoursomeRoster
-                match={match}
-                players={scorecardPlayers}
-                homeTeam={homeTeam}
-                awayTeam={awayTeam}
-                dividerBelow={showPairingSummaries}
-              />
-              <FoursomeMatchSummaries {...foursomeSummaryProps} />
-            </section>
+          {pointsResult && pointsResult.pairings.length > 0 ? (
+            <LeagueFinalScoresCard
+              result={pointsResult}
+              players={scorecardPlayers}
+              viewerTeamId={viewer.teamId}
+              homeTeam={homeTeam}
+              awayTeam={awayTeam}
+              holes={holes}
+              course={course}
+              league={league}
+              scoresForPlayer={scoresForPlayer}
+            />
           ) : null}
 
-          {showBestBallScorecard ? (
-            <section className="rounded-[8px] border border-sand-hunter bg-white p-3">
-              <p className="card-title mb-3">Match scorecard</p>
-              <p className="mb-2 text-[10px] leading-snug text-fairway-500">
-                Team best ball — one team score per hole (no handicap strokes).
-              </p>
-              <TeamBestBallScorecard
-                holes={holes}
-                homeTeam={homeTeam}
-                awayTeam={awayTeam}
-                homePartnerScores={homePartnerScores}
-                awayPartnerScores={awayPartnerScores}
-              />
-            </section>
-          ) : null}
-
-          {showIndividualScorecard ? (
-            <section className="rounded-[8px] border border-sand-hunter bg-white p-3">
-              <p className="card-title mb-3">Match scorecard</p>
-              <p className="mb-2 text-[10px] leading-snug text-fairway-500">
-                {scoringFormat === "stroke"
-                  ? "Gross strokes by hole — net totals are in League points."
-                  : "Green dot marks a stroke hole (pop) on net match play."}
-              </p>
+          {showScorecard ? (
+            <LeagueSummarySection title="Scorecard">
               <LeagueScorecardTable
                 courseName=""
                 nineLabel={nineLabel}
                 hideTitle
-                casualMatchNet={scoringFormat === "match"}
                 holes={holes}
                 players={scorecardPlayers}
                 scoresForPlayer={scoresForPlayer}
+                summaryFormat={scoringFormat}
+                course={course}
+                league={league}
+                decoratedScores={scoringFormat === "match"}
               />
-            </section>
+            </LeagueSummarySection>
           ) : null}
         </div>
       </FullPageModal>
