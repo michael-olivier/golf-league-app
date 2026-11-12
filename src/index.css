@@ -603,15 +603,17 @@ input[type="number"] {
   color: rgb(36 63 45 / 0.72);
 }
 
+.league-game-type-pill,
 .league-upcoming-card__game-pill {
   border-radius: 9999px;
-  border: 1px solid rgb(56 102 65 / 0.45);
-  padding: 0.125rem 0.625rem;
+  border: 1px solid #568969;
+  background: none;
+  padding: 2px 8px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--sand-hunter);
+  color: #243f2d;
 }
 
 .league-upcoming-card__team {
@@ -850,6 +852,14 @@ input[type="number"] {
     0 16px 40px rgb(0 0 0 / 0.18);
 }
 
+.home-pass-card.app-glass-card {
+  box-shadow:
+    0 8px 28px rgb(0 0 0 / 0.1),
+    0 1px 0 rgb(255 255 255 / 0.9) inset;
+  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  backdrop-filter: blur(32px) saturate(1.8);
+}
+
 .full-page-modal-scroll {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -875,6 +885,11 @@ input[type="number"] {
 
 .home-pass-card--scoring {
   background: #faf9f3;
+}
+
+.home-pass-card.app-glass-card.home-pass-card--scoring,
+.home-pass-card.app-glass-card.home-pass-card--league {
+  background: rgb(255 255 255 / 0.72);
 }
 
 .home-pass-stat-font {
@@ -1059,6 +1074,22 @@ input[type="number"] {
   line-height: 1.15;
   letter-spacing: 0.06em;
   color: rgb(255 255 255 / 0.88);
+}
+
+.home-pass-card.app-glass-card .home-pass-league-team-name {
+  color: #243f2d;
+}
+
+.home-pass-card.app-glass-card .home-pass-league-recent-title {
+  color: #243f2d;
+}
+
+.home-pass-card.app-glass-card .home-pass-league-recent-meta {
+  color: rgb(36 63 45 / 0.72);
+}
+
+.home-pass-card.app-glass-card .home-pass-league-recent-points {
+  color: #243f2d;
 }
 
 .home-pass-league-recent-list {
@@ -1610,6 +1641,10 @@ button.app-glass-card:active {
 
 .app-bottom-nav-pill {
   padding: 0.3125rem 0.375rem;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow:
+    0 8px 28px rgb(0 0 0 / 0.1),
+    0 1px 0 rgb(255 255 255 / 0.95) inset;
 }
 
 .app-bottom-nav-item {
@@ -1621,8 +1656,8 @@ button.app-glass-card:active {
   justify-content: center;
   gap: 0.3125rem;
   border-radius: 9999px;
-  padding: 0.375rem 0.125rem;
-  color: var(--ui-muted);
+  padding: calc(0.375rem + 2px) 0.125rem;
+  color: #373737;
   transition:
     background-color 180ms ease,
     color 180ms ease,
@@ -1651,17 +1686,17 @@ button.app-glass-card:active {
 }
 
 .app-bottom-nav-item.is-active {
-  background: rgb(0 0 0 / 0.16);
-  color: var(--sand-hunter);
+  background: rgb(55 55 55 / 0.14);
+  color: #373737;
 }
 
 .app-bottom-nav--on-dark .app-bottom-nav-item {
-  color: rgb(255 255 255 / 0.72);
+  color: #373737;
 }
 
 .app-bottom-nav--on-dark .app-bottom-nav-item.is-active {
-  background: rgb(0 0 0 / 0.32);
-  color: #fff;
+  background: rgb(55 55 55 / 0.18);
+  color: #373737;
 }
 
 .has-app-bottom-nav .page-scroll {

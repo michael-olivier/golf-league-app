@@ -125,24 +125,24 @@ export function HomeLeagueFeaturedCard({
   return (
     <article
       ref={leagueCardRef}
-      className="home-pass-card home-pass-card--league border border-sand-hunter/40 bg-sand-hunter text-white"
+      className="app-glass-card home-pass-card home-pass-card--league border border-white/60 text-[#243f2d]"
     >
-      <h2 className="text-xl font-bold leading-tight">
+      <h2 className="text-xl font-bold leading-tight text-[#243f2d]">
         {homeTeam?.name ?? "Home"}
-        <span className="font-medium text-white/80"> vs. </span>
+        <span className="font-medium text-[#243f2d]/70"> vs. </span>
         {awayTeam?.name ?? "Away"}
       </h2>
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/90">
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#243f2d]/90">
         <span>{formatMatchWhen(match.date)}</span>
-        <span className="text-white/50" aria-hidden>
+        <span className="text-[#243f2d]/45" aria-hidden>
           •
         </span>
         <span>{formatMatchStartTime(match)}</span>
-        <span className="text-white/50" aria-hidden>
+        <span className="text-[#243f2d]/45" aria-hidden>
           •
         </span>
         <span>{nineLabel}</span>
-        <span className="ml-auto rounded-full bg-sand-champagne px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-sand-hunter">
+        <span className="league-game-type-pill ml-auto shrink-0">
           {gameLabel}
         </span>
       </div>
@@ -169,14 +169,14 @@ export function HomeLeagueFeaturedCard({
             key={`${row.playerA.id}-${row.playerB.id}`}
             className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm"
           >
-            <p className="truncate font-medium">
+            <p className="truncate font-medium text-[#243f2d]">
               {firstName(row.playerA.name)}
-              <span className="text-white/75">
+              <span className="text-[#243f2d]/72">
                 {" "}
                 ({row.playerA.handicapIndex.toFixed(1)})
               </span>
             </p>
-            <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-white/90">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-[#243f2d]/90">
               {row.popHoles.length > 0
                 ? formatPopHoleList(row.popHoles)
                 : "Even"}
@@ -186,9 +186,9 @@ export function HomeLeagueFeaturedCard({
                 strokeWidth={1}
               />
             </span>
-            <p className="truncate text-right font-medium">
+            <p className="truncate text-right font-medium text-[#243f2d]">
               {firstName(row.playerB.name)}
-              <span className="text-white/75">
+              <span className="text-[#243f2d]/72">
                 {" "}
                 ({row.playerB.handicapIndex.toFixed(1)})
               </span>
@@ -215,7 +215,7 @@ export function HomeLeagueFeaturedCard({
           aria-expanded={matchesExpanded}
           aria-controls="home-league-recent-matches"
           onClick={() => setMatchesExpanded((open) => !open)}
-          className="home-pass-footer home-pass-footer--on-dark border-t border-white/25"
+          className="home-pass-footer border-t border-sand-hunter/20"
         >
           <span>Recent matches</span>
           <ChevronDown
@@ -267,7 +267,7 @@ export function HomeLeagueFeaturedCard({
                         </p>
                         <p className="home-pass-league-recent-meta mt-1 tabular-nums">
                           {formatMatchWhen(past.date)}
-                          <span className="mx-1.5 text-white/45" aria-hidden>
+                          <span className="mx-1.5 text-[#243f2d]/45" aria-hidden>
                             •
                           </span>
                           {past.gameType ?? "League"}

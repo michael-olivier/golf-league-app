@@ -60,7 +60,7 @@ export function HomeScoringAverageCard({
   ).slice(0, 5);
 
   return (
-    <article className="home-pass-card home-pass-card--scoring border border-sand-hunter/25">
+    <article className="app-glass-card home-pass-card home-pass-card--scoring border border-white/60">
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-4">
           <p
